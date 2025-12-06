@@ -1,0 +1,9 @@
+.DS_Store
+.env
+**/.env
+venv/
+.venv/
+**/venv/
+**/.venv/
+.git-backup/
+**/.git-backup/
