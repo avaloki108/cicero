@@ -166,7 +166,7 @@ class _CategoryCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(icon, color: textColor, size: 28),
@@ -243,7 +243,7 @@ class _PromptsSheet extends StatelessWidget {
                 ),
               ),
             );
-          }).toList(),
+          }),
           const SizedBox(height: 20),
         ],
       ),

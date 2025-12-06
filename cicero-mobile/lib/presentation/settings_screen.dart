@@ -43,7 +43,7 @@ class SettingsScreen extends ConsumerWidget {
                   trailing: Switch.adaptive(
                     value: isDark, 
                     onChanged: (v) {}, // Connect to ThemeProvider later
-                    activeColor: CiceroTheme.primaryLight,
+                    activeTrackColor: CiceroTheme.primaryLight,
                   ),
                   isLast: true,
                 ),
@@ -69,7 +69,7 @@ class SettingsScreen extends ConsumerWidget {
                   trailing: Switch.adaptive(
                     value: true, 
                     onChanged: (v) {},
-                    activeColor: CiceroTheme.primaryLight,
+                    activeTrackColor: CiceroTheme.primaryLight,
                   ),
                   isFirst: true,
                   isLast: true,
@@ -204,7 +204,7 @@ class _Divider extends StatelessWidget {
     return Divider(
       height: 1, 
       indent: 48, 
-      color: Colors.grey.withOpacity(0.2)
+      color: Colors.grey.withValues(alpha: 0.2)
     );
   }
 }
