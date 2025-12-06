@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/models/chat_message.dart';
 import '../services/cicero_api_client.dart';
+import '../services/chat_storage_service.dart';
 import 'providers.dart';
 
 class ChatState {
@@ -25,31 +26,35 @@ class ChatState {
 
 class ChatNotifier extends StateNotifier<ChatState> {
   final CiceroApiClient _apiClient;
+  final ChatStorageService _storage = ChatStorageService();
 
-  ChatNotifier(this._apiClient) : super(ChatState());
+  ChatNotifier(this._apiClient) : super(ChatState()) {
+    _loadHistory();
+  }
+
+  void _loadHistory() {
+    final savedMessages = _storage.loadMessages();
+    if (savedMessages.isNotEmpty) {
+      state = state.copyWith(messages: savedMessages);
+    }
+  }
 
   Future<void> sendMessage(String text, String stateAbbr) async {
     if (text.trim().isEmpty || state.isLoading) return;
 
-    // 1. Show User Message immediately
     final userMsg = ChatMessage(
       content: text,
       isUser: true,
       timestamp: DateTime.now(),
     );
 
-    state = state.copyWith(
-      messages: [...state.messages, userMsg],
-      isLoading: true,
-      error: null,
-    );
+    final newMessages = [...state.messages, userMsg];
+    state = state.copyWith(messages: newMessages, isLoading: true, error: null);
+    _storage.saveMessages(newMessages);
 
     try {
-      // 2. Call the Python Brain
       final response = await _apiClient.sendMessage(text, stateAbbr);
 
-      // 3. Show Cicero's Response
-      // We combine the answer and citations into one readable bubble for now
       String fullContent = response.response;
       if (response.citations.isNotEmpty) {
         fullContent += "\n\nSources:\n${response.citations.join('\n')}";
@@ -61,32 +66,28 @@ class ChatNotifier extends StateNotifier<ChatState> {
         timestamp: DateTime.now(),
       );
 
-      state = state.copyWith(
-        messages: [...state.messages, botMsg],
-        isLoading: false,
-      );
+      final finalMessages = [...newMessages, botMsg];
+      state = state.copyWith(messages: finalMessages, isLoading: false);
+      _storage.saveMessages(finalMessages);
     } catch (e) {
-      // 4. Handle Errors gracefully
       final errorMsg = ChatMessage(
-        content:
-            "I'm having trouble connecting to my law library right now. (${e.toString()})",
+        content: "Connection error: ${e.toString()}",
         isUser: false,
         timestamp: DateTime.now(),
       );
 
-      state = state.copyWith(
-        messages: [...state.messages, errorMsg],
-        isLoading: false,
-      );
+      final errorMessages = [...newMessages, errorMsg];
+      state = state.copyWith(messages: errorMessages, isLoading: false);
+      _storage.saveMessages(errorMessages);
     }
   }
 
   void clearChat() {
     state = ChatState();
+    _storage.clearHistory();
   }
 }
 
-// Connect the Notifier to the UI
 final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
   final apiClient = ref.watch(ciceroApiClientProvider);
   return ChatNotifier(apiClient);

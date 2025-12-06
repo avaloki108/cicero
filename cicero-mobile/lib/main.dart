@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'core/theme_cicero.dart'; // Import the new theme
+import 'package:hive_flutter/hive_flutter.dart';
+import 'core/theme_cicero.dart';
 import 'presentation/home_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Hive.initFlutter();
+  await Hive.openBox('chat_history');
+
   runApp(const ProviderScope(child: CiceroApp()));
 }
 
@@ -17,7 +23,7 @@ class CiceroApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: CiceroTheme.light(),
       darkTheme: CiceroTheme.dark(),
-      themeMode: ThemeMode.system, // Auto-switch based on phone settings
+      themeMode: ThemeMode.system,
       home: const HomeScreen(),
     );
   }
