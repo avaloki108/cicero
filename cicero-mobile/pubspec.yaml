@@ -30,6 +30,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  speech_to_text: ^7.3.0
+  permission_handler: ^11.3.0
+  flutter_tts: ^3.8.5
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -40,6 +43,7 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   http: ^1.2.2
+  path_provider: 2.0.15
 
 dev_dependencies:
   flutter_test:

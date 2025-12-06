@@ -1,0 +1,51 @@
+Error: Error code: 400 - {'error': {'message': 'The model `llama3-70b-8192` has been decommissioned and is no longer supported. Please refer to https://console.groq.com/docs/deprecations for a recommendation on which model to use instead.', 'type': 'invalid_request_error', 'code': 'model_decommissioned'}}
+Traceback (most recent call last):
+  File "/home/dok/Developer/cicero/cicero-backend/main.py", line 21, in chat_endpoint
+    final_state = app_graph.invoke(inputs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3068, in invoke
+    for chunk in self.stream(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 2643, in stream
+    for _ in runner.tick(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_runner.py", line 167, in tick
+    run_with_retry(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_retry.py", line 42, in run_with_retry
+    return task.proc.invoke(task.input, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 656, in invoke
+    input = context.run(step.invoke, input, config, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 400, in invoke
+    ret = self.func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/app/agent.py", line 52, in reasoner
+    response = llm_with_tools.invoke(messages)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/runnables/base.py", line 5548, in invoke
+    return self.bound.invoke(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 398, in invoke
+    self.generate_prompt(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1117, in generate_prompt
+    return self.generate(prompt_messages, stop=stop, callbacks=callbacks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 927, in generate
+    self._generate_with_cache(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1221, in _generate_with_cache
+    result = self._generate(
+             ^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_groq/chat_models.py", line 590, in _generate
+    response = self.client.create(messages=message_dicts, **params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/resources/chat/completions.py", line 461, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/_base_client.py", line 1242, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/_base_client.py", line 1044, in request
+    raise self._make_status_error_from_response(err.response) from None
+groq.BadRequestError: Error code: 400 - {'error': {'message': 'The model `llama3-70b-8192` has been decommissioned and is no longer supported. Please refer to https://console.groq.com/docs/deprecations for a recommendation on which model to use instead.', 'type': 'invalid_request_error', 'code': 'model_decommissioned'}}
+During task with name 'agent' and id '14a5c8f1-481e-b96b-65a5-138ba5976a21'
+
+--------------------

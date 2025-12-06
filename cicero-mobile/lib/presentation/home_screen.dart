@@ -1,35 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'providers.dart';
 import 'chat_screen.dart';
 import 'examples_screen.dart';
 import 'settings_screen.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  int _currentIndex = 0;
-
-  final List<Widget> _screens = [
-    const ChatScreen(),
-    const ExamplesScreen(),
-    const SettingsScreen(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    // You can use ref.listen to switch tabs if a prompt is selected from examples
-    // (This requires a provider change we can add later)
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentIndex = ref.watch(tabIndexProvider);
+    const screens = [
+      ChatScreen(),
+      ExamplesScreen(),
+      SettingsScreen(),
+    ];
 
     return Scaffold(
       body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+        index: currentIndex,
+        children: screens,
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -41,8 +33,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
         child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
+          currentIndex: currentIndex,
+          onTap: (index) =>
+              ref.read(tabIndexProvider.notifier).state = index,
           type: BottomNavigationBarType.fixed,
           showSelectedLabels: true,
           showUnselectedLabels: true,

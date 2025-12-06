@@ -8,4 +8,4 @@ langgraph
 langchain-groq
 pydantic
 pydantic-settings
-pinecone-client
+pinecone

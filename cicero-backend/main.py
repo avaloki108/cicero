@@ -29,4 +29,9 @@ async def chat_endpoint(request: ChatRequest):
             thought_process=[],
         )
     except Exception as e:
+        with open("error.log", "a") as f:
+            import traceback
+            f.write(f"Error: {str(e)}\n")
+            f.write(traceback.format_exc())
+            f.write("\n" + "-"*20 + "\n")
         raise HTTPException(status_code=500, detail=str(e))

@@ -5,6 +5,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import '../core/theme_cicero.dart';
 import 'chat_state_notifier.dart';
 import 'providers.dart';
+import '../services/voice_service.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -16,6 +17,36 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final VoiceService _voiceService = VoiceService();
+  bool _isListening = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initVoice(); // <--- NEW
+  }
+
+  void _initVoice() async {
+    await _voiceService.initialize();
+  }
+
+  void _toggleListening() {
+    if (_isListening) {
+      _voiceService.stop();
+      setState(() => _isListening = false);
+    } else {
+      setState(() => _isListening = true);
+      _voiceService.startListening(
+        onResult: (text) {
+          setState(() {
+            _controller.text = text;
+            // Optional: Auto-send if silence is detected?
+            // For now, let's just fill the text box.
+          });
+        },
+      );
+    }
+  }
 
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
@@ -85,6 +116,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
             child: Row(
               children: [
+                // MICROPHONE BUTTON (NEW)
+                GestureDetector(
+                  onTap: _toggleListening,
+                  child: CircleAvatar(
+                    backgroundColor: _isListening
+                        ? Colors.red
+                        : Colors.grey.shade200,
+                    radius: 20,
+                    child: Icon(
+                      _isListening ? LucideIcons.micOff : LucideIcons.mic,
+                      color: _isListening ? Colors.white : Colors.black54,
+                      size: 20,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // TEXT FIELD (EXISTING)
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
@@ -97,10 +146,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       controller: _controller,
                       maxLines: 4,
                       minLines: 1,
-                      decoration: const InputDecoration(
-                        hintText: 'Ask a legal question...',
+                      decoration: InputDecoration(
+                        hintText: _isListening
+                            ? 'Listening...'
+                            : 'Ask a legal question...', // Change hint
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 10,
                         ),
@@ -109,6 +160,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
+
+                // SEND BUTTON (EXISTING)
                 GestureDetector(
                   onTap: () {
                     if (_controller.text.trim().isNotEmpty) {

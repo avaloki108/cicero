@@ -118,9 +118,8 @@ class ExamplesScreen extends ConsumerWidget {
                               prompt.replaceAll('[STATE]', stateName),
                               stateAbbr,
                             );
-                        // Navigate to Chat Tab (Index 0)
-                        // Note: You need a way to switch tabs programmatically
-                        // For now, we assume the user will tap 'Chat'
+                        // Navigate to Chat tab so the user can see the result
+                        ref.read(tabIndexProvider.notifier).state = 0;
                       },
                     ),
                   );

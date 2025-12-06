@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../core/theme_cicero.dart';
+import 'providers.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -11,14 +12,28 @@ class SettingsScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? Colors.black : const Color(0xFFF2F2F7);
     final sectionColor = isDark ? const Color(0xFF1C1C1E) : Colors.white;
+    final stateAbbr = ref.watch(selectedStateProvider);
+    final stateName = abbrToStateName[stateAbbr] ?? stateAbbr;
+    final themeMode = ref.watch(themeModeProvider);
+    final themeLabel = themeMode == ThemeMode.system
+        ? 'System'
+        : themeMode == ThemeMode.dark
+        ? 'Dark'
+        : 'Light';
+    final apiBaseUrl = ref.watch(apiBaseUrlProvider);
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(title: const Text('Settings'), backgroundColor: bgColor),
+      appBar: AppBar(
+        title: const Text('Settings'),
+        backgroundColor: bgColor,
+        foregroundColor: isDark ? Colors.white : Colors.black,
+        elevation: 0,
+      ),
       body: ListView(
         children: [
           const SizedBox(height: 20),
-          
+
           // SECTION 1: PREFERENCES
           _SectionHeader(title: "PREFERENCES"),
           Container(
@@ -32,20 +47,31 @@ class SettingsScreen extends ConsumerWidget {
                 _SettingsTile(
                   icon: LucideIcons.mapPin,
                   title: "Primary State",
-                  value: "California", // This can be connected to provider
+                  value: stateName,
                   isFirst: true,
-                  onTap: () {},
+                  onTap: () => _showStatePicker(context, ref, stateAbbr),
                 ),
                 _Divider(),
                 _SettingsTile(
                   icon: LucideIcons.moon,
                   title: "Dark Mode",
+                  value: themeLabel,
                   trailing: Switch.adaptive(
-                    value: isDark, 
-                    onChanged: (v) {}, // Connect to ThemeProvider later
+                    value: themeMode == ThemeMode.dark,
+                    onChanged: (v) => ref
+                        .read(themeModeProvider.notifier)
+                        .setMode(v ? ThemeMode.dark : ThemeMode.system),
                     activeTrackColor: CiceroTheme.primaryLight,
                   ),
+                  isLast: false,
+                ),
+                _Divider(),
+                _SettingsTile(
+                  icon: LucideIcons.server,
+                  title: "Server Address",
+                  value: apiBaseUrl,
                   isLast: true,
+                  onTap: () => _showBaseUrlDialog(context, ref, apiBaseUrl),
                 ),
               ],
             ),
@@ -67,7 +93,7 @@ class SettingsScreen extends ConsumerWidget {
                   icon: LucideIcons.fingerprint,
                   title: "Biometric Unlock",
                   trailing: Switch.adaptive(
-                    value: true, 
+                    value: true,
                     onChanged: (v) {},
                     activeTrackColor: CiceroTheme.primaryLight,
                   ),
@@ -98,7 +124,7 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () {},
             ),
           ),
-          
+
           const SizedBox(height: 40),
           const Center(
             child: Text(
@@ -111,6 +137,83 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+void _showStatePicker(BuildContext context, WidgetRef ref, String currentAbbr) {
+  showModalBottomSheet(
+    context: context,
+    builder: (ctx) {
+      final isDark = Theme.of(ctx).brightness == Brightness.dark;
+      return SafeArea(
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Select primary state',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 12),
+              ...stateNameToAbbr.entries.map(
+                (entry) => RadioListTile<String>(
+                  value: entry.value,
+                  // ignore: deprecated_member_use
+                  groupValue: currentAbbr,
+                  // ignore: deprecated_member_use
+                  onChanged: (val) {
+                    if (val == null) return;
+                    ref.read(selectedStateProvider.notifier).setStateAbbr(val);
+                    Navigator.of(ctx).pop();
+                  },
+                  title: Text(entry.key),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+Future<void> _showBaseUrlDialog(
+  BuildContext context,
+  WidgetRef ref,
+  String currentUrl,
+) async {
+  final controller = TextEditingController(text: currentUrl);
+  await showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Server Address'),
+      content: TextField(
+        controller: controller,
+        decoration: const InputDecoration(
+          labelText: 'Base URL',
+          hintText: 'http://10.0.2.2:8000',
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            ref.read(apiBaseUrlProvider.notifier).setBaseUrl(controller.text);
+            Navigator.of(ctx).pop();
+          },
+          child: const Text('Save'),
+        ),
+      ],
+    ),
+  );
 }
 
 // --- Helper Components for iOS-style Settings ---
@@ -161,7 +264,7 @@ class _SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.vertical(
@@ -172,7 +275,11 @@ class _SettingsTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: iconColor ?? (isDark ? Colors.white : Colors.black)),
+            Icon(
+              icon,
+              size: 20,
+              color: iconColor ?? (isDark ? Colors.white : Colors.black),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -187,6 +294,8 @@ class _SettingsTile extends StatelessWidget {
               Text(
                 value!,
                 style: const TextStyle(fontSize: 16, color: Colors.grey),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             if (trailing != null) trailing!,
             if (trailing == null && value == null)
@@ -202,9 +311,9 @@ class _Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Divider(
-      height: 1, 
-      indent: 48, 
-      color: Colors.grey.withValues(alpha: 0.2)
+      height: 1,
+      indent: 48,
+      color: Colors.grey.withValues(alpha: 0.2),
     );
   }
 }
