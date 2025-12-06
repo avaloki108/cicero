@@ -1,0 +1,8 @@
+Remove Windows-specific files and configurations for the Flutter application
+
+- Deleted .gitignore file for the Windows platform.
+- Removed CMakeLists.txt files and associated configurations for building the Windows application.
+- Eliminated generated plugin registrant files and related CMake configurations.
+- Cleared out runner files including main application logic, resource files, and utility functions.
+- Removed the Flutter window management implementation and associated headers.
+- Cleaned up all references to Windows-specific resources and icons.

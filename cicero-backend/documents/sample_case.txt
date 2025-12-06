@@ -1,0 +1,44 @@
+### **Miranda v. Arizona (1966)**
+**Citation:** 384 U.S. 436
+
+**One-Sentence Summary:** The Supreme Court ruled that detained criminal suspects must be informed of their constitutional right to an attorney and against self-incrimination prior to police questioning.
+
+---
+
+### **1. Background & Facts**
+* **The Arrest:** In 1963, Ernesto Miranda was arrested at his home in Phoenix, Arizona, and identified by a witness as the suspect in the kidnapping and rape of an 18-year-old woman.
+* **The Interrogation:** Police officers questioned Miranda for two hours without informing him of his rights. He eventually signed a written confession that included a typed statement claiming the confession was made voluntarily "with full knowledge of my legal rights."
+* **The Trial:** Prosecutors used his confession as evidence during the trial. Miranda was convicted of rape and kidnapping and sentenced to 20–30 years in prison. His attorney appealed, arguing that the confession should have been excluded because Miranda had not been warned of his right to counsel or his right against self-incrimination.
+
+### **2. The Legal Issue**
+The central question before the Court was: **Does the Fifth Amendment’s protection against self-incrimination extend to the police interrogation of a suspect in custody?**
+
+### **3. The Supreme Court Decision**
+**Vote:** 5–4 in favor of Miranda.
+**Majority Opinion:** Written by Chief Justice Earl Warren.
+
+* **The Holding:** The Court held that the prosecution cannot use statements stemming from custodial interrogation of a defendant unless it demonstrates the use of procedural safeguards effective to secure the privilege against self-incrimination.
+* **The Reasoning:**
+    * **Inherent Coercion:** The Court reasoned that modern custodial interrogation creates an "inherently compelling" (coercive) atmosphere designed to break the will of the suspect.
+    * **Safeguards Required:** To combat this coercion and ensure a suspect's silence is truly a product of free will, police must affirmatively warn suspects of their rights before questioning begins.
+    * **Waiver:** A suspect can waive these rights, but the waiver must be made "voluntarily, knowingly, and intelligently."
+
+### **4. The "Miranda Rights"**
+The decision established the specific warnings police are required to give (now known as the *Miranda Warning*):
+1.  You have the right to remain silent.
+2.  Anything you say can and will be used against you in a court of law.
+3.  You have the right to an attorney.
+4.  If you cannot afford an attorney, one will be provided for you.
+
+### **5. Dissenting Opinions**
+Justices Harlan, Stewart, White, and Clark dissented. Their primary arguments included:
+* **Judicial Overreach:** They argued the Court was creating new law rather than interpreting the Constitution (judicial activism).
+* **Hampering Law Enforcement:** They feared the ruling would make it nearly impossible for police to solve crimes and obtain confessions.
+* **Lack of Precedent:** They believed the Fifth Amendment was intended to prevent legal compulsion (like being forced to testify in court), not police pressure in the station house.
+
+### **6. Impact & Legacy**
+* **Outcome for Miranda:** His conviction was overturned. Arizona retried him *without* the confession; he was convicted again based on other evidence and served 11 years.
+* **Legal Standard:** The decision fundamentally changed American law enforcement. The "Miranda warning" became a standard police procedure.
+* **Cultural Icon:** The warning became so embedded in TV and film that it is now one of the most widely recognized aspects of the U.S. legal system.
+
+***

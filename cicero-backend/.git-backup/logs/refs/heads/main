@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 a64a9d888aa9e18c235f533059a31d7e571c1ba2 Your Name <you@example.com> 1765023902 -0700	commit (initial): Initial commit: Cicero backend API
+a64a9d888aa9e18c235f533059a31d7e571c1ba2 a64a9d888aa9e18c235f533059a31d7e571c1ba2 Your Name <you@example.com> 1765023902 -0700	Branch: renamed refs/heads/main to refs/heads/main
+a64a9d888aa9e18c235f533059a31d7e571c1ba2 5435de3e5924032477914d2cf5f425849cdf105d Your Name <you@example.com> 1765024485 -0700	commit: Remove Windows-specific files and configurations for the Flutter application
