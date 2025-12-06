@@ -1,6 +1,34 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+class CiceroApiClient {
+  // thanks to 'adb reverse tcp:8000 tcp:8000', we can use localhost!
+  final String baseUrl = 'http://127.0.0.1:8000';
+
+  Future<CiceroResponse> sendMessage(String message, String? state) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/chat'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'message': message,
+          'state': state ?? 'US',
+          'history': [] 
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return CiceroResponse.fromJson(data);
+      } else {
+        throw Exception('Server Error: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Connection Failed. Did you run "adb reverse tcp:8000 tcp:8000"?\nError: $e');
+    }
+  }
+}
+
 class CiceroResponse {
   final String response;
   final List<String> citations;
@@ -9,39 +37,8 @@ class CiceroResponse {
 
   factory CiceroResponse.fromJson(Map<String, dynamic> json) {
     return CiceroResponse(
-      response: json['response'] as String,
-      citations:
-          (json['citations'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          [],
+      response: json['response'] ?? '',
+      citations: List<String>.from(json['citations'] ?? []),
     );
-  }
-}
-
-class CiceroApiClient {
-  // Use your computer's local IP address for physical device testing
-  // Run `ip addr` or `ifconfig` to find it (e.g., 192.168.1.x)
-  static const String baseUrl =
-      'http://192.168.1.18:8000'; // REPLACE THIS with your actual IP
-
-  Future<CiceroResponse> sendMessage(String message, String stateAbbr) async {
-    final url = Uri.parse('$baseUrl/chat');
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'message': message, 'state': stateAbbr}),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return CiceroResponse.fromJson(data);
-      } else {
-        throw Exception('Failed to load response: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to connect to Cicero: $e');
-    }
   }
 }

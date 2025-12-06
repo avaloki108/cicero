@@ -1,10 +1,5 @@
-import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/cicero_api_client.dart';
-
-// Export prompt selected provider for cross-screen communication
-export '../domain/models/prompt_selected_notifier.dart'
-    show promptSelectedProvider;
 
 // --- CORE SERVICES ---
 
