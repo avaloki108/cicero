@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # The "Brain" (Fast Reasoning)
     GROQ_API_KEY: str
-    GROQ_MODEL: str = "llama3-70b-8192"  # Fast, smart, and efficient for agent loops
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"  # Currently supported Groq model
 
     # The "Reader" (Large Context & Embeddings)
     GEMINI_API_KEY: str

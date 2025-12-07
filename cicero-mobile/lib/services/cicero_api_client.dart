@@ -34,7 +34,7 @@ class CiceroApiClient {
         : normalized;
   }
 
-  Future<CiceroResponse> sendMessage(String message, String? state) async {
+  Future<CiceroResponse> sendMessage(String message, String? state, {List<Map<String, dynamic>> history = const []}) async {
     try {
       final response = await http
           .post(
@@ -43,7 +43,7 @@ class CiceroApiClient {
             body: jsonEncode({
               'message': message,
               'state': state ?? 'US',
-              'history': [],
+              'history': history,
             }),
           )
           .timeout(

@@ -53,7 +53,13 @@ class ChatNotifier extends StateNotifier<ChatState> {
     _storage.saveMessages(newMessages);
 
     try {
-      final response = await _apiClient.sendMessage(text, stateAbbr);
+      // Convert existing messages to history format (excluding the current message being sent)
+      final history = newMessages.take(newMessages.length - 1).map((msg) => {
+        'role': msg.isUser ? 'user' : 'assistant',
+        'content': msg.content,
+      }).toList();
+
+      final response = await _apiClient.sendMessage(text, stateAbbr, history: history);
 
       String fullContent = response.response;
       if (response.citations.isNotEmpty) {

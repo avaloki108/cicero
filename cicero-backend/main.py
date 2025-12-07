@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from app.models import ChatRequest, ChatResponse
 from app.agent import app_graph
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage
 
 app = FastAPI(title="Cicero API", version="2.0")
 
@@ -14,8 +14,18 @@ def health_check():
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     try:
-        # Convert request to LangGraph format
-        inputs = {"messages": [HumanMessage(content=request.message)]}
+        # Convert request history and current message to LangGraph format
+        history_messages = []
+        for item in request.history:
+            if isinstance(item, dict) and "role" in item and "content" in item:
+                if item["role"] == "user":
+                    history_messages.append(HumanMessage(content=item["content"]))
+                elif item["role"] == "assistant":
+                    history_messages.append(AIMessage(content=item["content"]))
+            # ignore other roles or malformed items
+        current_message = HumanMessage(content=request.message)
+        messages = history_messages + [current_message]
+        inputs = {"messages": messages}
 
         # Run the agent
         final_state = await app_graph.ainvoke(
