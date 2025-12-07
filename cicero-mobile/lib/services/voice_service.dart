@@ -8,17 +8,24 @@ class VoiceService {
 
   /// Initialize the speech engine
   Future<bool> initialize() async {
-    // 1. Ask for permission
-    var status = await Permission.microphone.request();
-    if (status != PermissionStatus.granted) {
-      return false; // User said no
+    // 1. Ask for permission (mobile only)
+    if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)) {
+      var status = await Permission.microphone.request();
+      if (status != PermissionStatus.granted) {
+        return false; // User said no
+      }
     }
 
-    // 2. Warm up the engine
-    _isAvailable = await _speech.initialize(
-      onStatus: (status) => debugPrint('Voice Status: $status'),
-      onError: (error) => debugPrint('Voice Error: $error'),
-    );
+    // 2. Warm up the engine (mobile only)
+    if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)) {
+      _isAvailable = await _speech.initialize(
+        onStatus: (status) => debugPrint('Voice Status: $status'),
+        onError: (error) => debugPrint('Voice Error: $error'),
+      );
+    } else {
+      _isAvailable = false;
+      debugPrint('Voice Service not supported on this platform');
+    }
 
     return _isAvailable;
   }

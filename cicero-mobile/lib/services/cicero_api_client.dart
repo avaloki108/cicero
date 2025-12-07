@@ -15,12 +15,12 @@ class CiceroApiClient {
 
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       // Android emulator cannot reach localhost directly
-      // return 'http://10.0.2.2:8000';
+      return 'http://10.0.2.2:8013';
       // Using local IP for physical device testing
-      return 'http://192.168.1.24:8000';
+      // return 'http://192.168.1.24:8013';
     }
 
-    return 'http://127.0.0.1:8000';
+    return 'http://127.0.0.1:8013';
   }
 
   static String _normalizeBaseUrl(String url) {
