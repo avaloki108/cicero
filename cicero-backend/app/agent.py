@@ -1,5 +1,6 @@
-from typing import TypedDict, List
+from typing import TypedDict, List, Annotated
 from langgraph.graph import StateGraph, END
+from langgraph.graph.message import add_messages
 from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, BaseMessage, ToolMessage
 from app.config import settings
@@ -8,7 +9,7 @@ from app.tools.knowledge_base import search_legal_precedents
 
 # 1. Define the State
 class AgentState(TypedDict):
-    messages: List[BaseMessage]
+    messages: Annotated[List[BaseMessage], add_messages]
     citations: List[str]
 
 
@@ -24,7 +25,7 @@ llm_with_tools = llm.bind_tools(tools)
 
 
 # 3. Define the Nodes
-def reasoner(state: AgentState):
+async def reasoner(state: AgentState):
     """
     The reasoning node. This is where Cicero 'thinks'.
     He looks at the conversation and decides if he needs to search the law.
@@ -34,14 +35,22 @@ def reasoner(state: AgentState):
     # System Prompt: defining the Persona
     system_prompt = SystemMessage(
         content="""
-        You are Cicero, an intelligent legal study companion.
-        Your goal is to help users understand the law by finding accurate sources.
-        
-        GUIDELINES:
-        1. You are friendly but professional, like a Roman statesman.
-        2. ALWAYS verify facts using your tools (search_case_law, search_statutes).
-        3. Never invent laws. If you don't know, use a tool to find out.
-        4. When you answer, cite the specific case or statute you found.
+        You are Cicero, your personal legal companion who cares about you.
+        Your goal is to turn "Scary Law" into "Helpful English" for people who are stressed and confused.
+
+        PERSONA:
+        - You are the "cool, non-judgemental Mr. Rogers with a Law Degree".
+        - You are warm, empathetic, and patient.
+        - You NEVER use complex legal jargon.
+
+        INSTRUCTIONS:
+        1. **Translate Legalese**: Always convert complex legal terms into plain, 5th-grade English.
+        2. **Use Analogies**: Explain concepts using simple metaphors (e.g., "Res Judicata" is like "Double Jeopardy for civil cases").
+        3. **Be Empathetic**: Acknowledge the user's stress. Don't just give facts; give comfort.
+        4. **Verify Everything**: ALWAYS use your tools (search_case_law, search_statutes) to find the truth. Never guess.
+        5. **Cite Sources**: When you give an answer, cite the specific case or statute found by your tools.
+        6. **No Raw Errors**: If a tool fails, say "I'm having trouble reaching the court records," never show a JSON error.
+        7. **Tool Protocol**: When you need to search, do not write any text. Just invoke the tool. Do NOT use XML tags like <function>.
     """
     )
 
@@ -49,7 +58,7 @@ def reasoner(state: AgentState):
     if not isinstance(messages[0], SystemMessage):
         messages.insert(0, system_prompt)
 
-    response = llm_with_tools.invoke(messages)
+    response = await llm_with_tools.ainvoke(messages)
     return {"messages": [response]}
 
 
@@ -70,7 +79,13 @@ async def tool_executor(state: AgentState):
         elif call["name"] == "search_statutes":
             res = await search_statutes.ainvoke(call["args"])
             results.append(res)
-
+        elif call["name"] == "search_legal_precedents":
+            res = await search_legal_precedents.ainvoke(call["args"])
+            results.append(res)
+        else:
+            print(f"Unknown tool called: {call['name']}")
+            results.append(f"Error: Tool '{call['name']}' is not available.")
+    
     # Return results as ToolMessages so Cicero can read them
     tool_messages = [
         ToolMessage(tool_call_id=call["id"], content=str(res))

@@ -49,3 +49,396 @@ groq.BadRequestError: Error code: 400 - {'error': {'message': 'The model `llama3
 During task with name 'agent' and id '14a5c8f1-481e-b96b-65a5-138ba5976a21'
 
 --------------------
+Error: No synchronous function provided to "tools".
+Either initialize with a synchronous function or invoke via the async API (ainvoke, astream, etc.)
+Traceback (most recent call last):
+  File "/home/dok/Developer/cicero/cicero-backend/main.py", line 21, in chat_endpoint
+    final_state = app_graph.invoke(inputs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3068, in invoke
+    for chunk in self.stream(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 2643, in stream
+    for _ in runner.tick(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_runner.py", line 167, in tick
+    run_with_retry(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_retry.py", line 42, in run_with_retry
+    return task.proc.invoke(task.input, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 656, in invoke
+    input = context.run(step.invoke, input, config, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 333, in invoke
+    raise TypeError(
+TypeError: No synchronous function provided to "tools".
+Either initialize with a synchronous function or invoke via the async API (ainvoke, astream, etc.)
+During task with name 'tools' and id '4c1b112c-8810-9df5-85c7-12ee7aef855b'
+
+--------------------
+Error: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+For troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT
+Traceback (most recent call last):
+  File "/home/dok/Developer/cicero/cicero-backend/main.py", line 21, in chat_endpoint
+    final_state = await app_graph.ainvoke(inputs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3158, in ainvoke
+    async for chunk in self.astream(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3014, in astream
+    raise GraphRecursionError(msg)
+langgraph.errors.GraphRecursionError: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+For troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT
+
+--------------------
+Error: Error code: 400 - {'error': {'message': "Failed to call a function. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'I\'m so glad you came to me with this question. Squatters\' rights can be really confusing and stressful. Let me see what I can find out for you. \n\n<function=search_statutes{"query": "squatters rights", "state": "FL"}</function>'}}
+Traceback (most recent call last):
+  File "/home/dok/Developer/cicero/cicero-backend/main.py", line 21, in chat_endpoint
+    final_state = await app_graph.ainvoke(inputs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3158, in ainvoke
+    async for chunk in self.astream(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 2971, in astream
+    async for _ in runner.atick(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_runner.py", line 304, in atick
+    await arun_with_retry(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_retry.py", line 137, in arun_with_retry
+    return await task.proc.ainvoke(task.input, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 705, in ainvoke
+    input = await asyncio.create_task(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 473, in ainvoke
+    ret = await self.afunc(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/app/agent.py", line 59, in reasoner
+    response = await llm_with_tools.ainvoke(messages)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/runnables/base.py", line 5561, in ainvoke
+    return await self.bound.ainvoke(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 421, in ainvoke
+    llm_result = await self.agenerate_prompt(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1128, in agenerate_prompt
+    return await self.agenerate(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1086, in agenerate
+    raise exceptions[0]
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1339, in _agenerate_with_cache
+    result = await self._agenerate(
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_groq/chat_models.py", line 611, in _agenerate
+    response = await self.async_client.create(messages=message_dicts, **params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/resources/chat/completions.py", line 941, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/_base_client.py", line 1762, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/_base_client.py", line 1576, in request
+    raise self._make_status_error_from_response(err.response) from None
+groq.BadRequestError: Error code: 400 - {'error': {'message': "Failed to call a function. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'I\'m so glad you came to me with this question. Squatters\' rights can be really confusing and stressful. Let me see what I can find out for you. \n\n<function=search_statutes{"query": "squatters rights", "state": "FL"}</function>'}}
+During task with name 'agent' and id '39090716-cb97-9eab-3a8c-adc71d5bc43b'
+
+--------------------
+Error: Error code: 400 - {'error': {'message': "Failed to call a function. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=search_statutes{"query": "squatter rights", "state": "FL"}</function>'}}
+Traceback (most recent call last):
+  File "/home/dok/Developer/cicero/cicero-backend/main.py", line 21, in chat_endpoint
+    final_state = await app_graph.ainvoke(inputs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3158, in ainvoke
+    async for chunk in self.astream(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 2971, in astream
+    async for _ in runner.atick(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_runner.py", line 304, in atick
+    await arun_with_retry(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_retry.py", line 137, in arun_with_retry
+    return await task.proc.ainvoke(task.input, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 705, in ainvoke
+    input = await asyncio.create_task(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 473, in ainvoke
+    ret = await self.afunc(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/app/agent.py", line 60, in reasoner
+    response = await llm_with_tools.ainvoke(messages)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/runnables/base.py", line 5561, in ainvoke
+    return await self.bound.ainvoke(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 421, in ainvoke
+    llm_result = await self.agenerate_prompt(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1128, in agenerate_prompt
+    return await self.agenerate(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1086, in agenerate
+    raise exceptions[0]
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1339, in _agenerate_with_cache
+    result = await self._agenerate(
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_groq/chat_models.py", line 611, in _agenerate
+    response = await self.async_client.create(messages=message_dicts, **params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/resources/chat/completions.py", line 941, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/_base_client.py", line 1762, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/_base_client.py", line 1576, in request
+    raise self._make_status_error_from_response(err.response) from None
+groq.BadRequestError: Error code: 400 - {'error': {'message': "Failed to call a function. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=search_statutes{"query": "squatter rights", "state": "FL"}</function>'}}
+During task with name 'agent' and id 'b28d875b-fa2b-ad63-1b89-cc2ff773ebdb'
+
+--------------------
+Error: Error code: 400 - {'error': {'message': 'The model `llama-3.1-70b-versatile` has been decommissioned and is no longer supported. Please refer to https://console.groq.com/docs/deprecations for a recommendation on which model to use instead.', 'type': 'invalid_request_error', 'code': 'model_decommissioned'}}
+Traceback (most recent call last):
+  File "/home/dok/Developer/cicero/cicero-backend/main.py", line 21, in chat_endpoint
+    final_state = await app_graph.ainvoke(inputs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3158, in ainvoke
+    async for chunk in self.astream(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 2971, in astream
+    async for _ in runner.atick(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_runner.py", line 304, in atick
+    await arun_with_retry(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_retry.py", line 137, in arun_with_retry
+    return await task.proc.ainvoke(task.input, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 705, in ainvoke
+    input = await asyncio.create_task(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 473, in ainvoke
+    ret = await self.afunc(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/app/agent.py", line 47, in reasoner
+    response = await llm_with_tools.ainvoke(messages)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/runnables/base.py", line 5561, in ainvoke
+    return await self.bound.ainvoke(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 421, in ainvoke
+    llm_result = await self.agenerate_prompt(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1128, in agenerate_prompt
+    return await self.agenerate(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1086, in agenerate
+    raise exceptions[0]
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1339, in _agenerate_with_cache
+    result = await self._agenerate(
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_groq/chat_models.py", line 611, in _agenerate
+    response = await self.async_client.create(messages=message_dicts, **params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/resources/chat/completions.py", line 941, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/_base_client.py", line 1762, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/_base_client.py", line 1576, in request
+    raise self._make_status_error_from_response(err.response) from None
+groq.BadRequestError: Error code: 400 - {'error': {'message': 'The model `llama-3.1-70b-versatile` has been decommissioned and is no longer supported. Please refer to https://console.groq.com/docs/deprecations for a recommendation on which model to use instead.', 'type': 'invalid_request_error', 'code': 'model_decommissioned'}}
+During task with name 'agent' and id '886315fc-6ce0-6366-e1ec-fe660b50436a'
+
+--------------------
+Error: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+For troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT
+Traceback (most recent call last):
+  File "/home/dok/Developer/cicero/cicero-backend/main.py", line 21, in chat_endpoint
+    final_state = await app_graph.ainvoke(inputs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3158, in ainvoke
+    async for chunk in self.astream(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3014, in astream
+    raise GraphRecursionError(msg)
+langgraph.errors.GraphRecursionError: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+For troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT
+
+--------------------
+Error: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+For troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT
+Traceback (most recent call last):
+  File "/home/dok/Developer/cicero/cicero-backend/main.py", line 21, in chat_endpoint
+    final_state = await app_graph.ainvoke(inputs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3158, in ainvoke
+    async for chunk in self.astream(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3014, in astream
+    raise GraphRecursionError(msg)
+langgraph.errors.GraphRecursionError: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+For troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT
+
+--------------------
+Error: Recursion limit of 50 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+For troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT
+Traceback (most recent call last):
+  File "/home/dok/Developer/cicero/cicero-backend/main.py", line 22, in chat_endpoint
+    final_state = await app_graph.ainvoke(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3158, in ainvoke
+    async for chunk in self.astream(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3014, in astream
+    raise GraphRecursionError(msg)
+langgraph.errors.GraphRecursionError: Recursion limit of 50 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+For troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT
+
+--------------------
+Error: Error code: 400 - {'error': {'message': "Failed to call a function. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'I\'m so sorry you\'re dealing with a stressful situation like this. Let me see what I can find out for you. \n\n<function=search_statutes{"query": "squatters rights", "state": "FL"}</function>'}}
+Traceback (most recent call last):
+  File "/home/dok/Developer/cicero/cicero-backend/main.py", line 22, in chat_endpoint
+    final_state = await app_graph.ainvoke(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3158, in ainvoke
+    async for chunk in self.astream(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 2971, in astream
+    async for _ in runner.atick(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_runner.py", line 304, in atick
+    await arun_with_retry(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_retry.py", line 137, in arun_with_retry
+    return await task.proc.ainvoke(task.input, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 705, in ainvoke
+    input = await asyncio.create_task(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 473, in ainvoke
+    ret = await self.afunc(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/app/agent.py", line 63, in reasoner
+    response = await llm_with_tools.ainvoke(messages)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/runnables/base.py", line 5561, in ainvoke
+    return await self.bound.ainvoke(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 421, in ainvoke
+    llm_result = await self.agenerate_prompt(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1128, in agenerate_prompt
+    return await self.agenerate(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1086, in agenerate
+    raise exceptions[0]
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1339, in _agenerate_with_cache
+    result = await self._agenerate(
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_groq/chat_models.py", line 611, in _agenerate
+    response = await self.async_client.create(messages=message_dicts, **params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/resources/chat/completions.py", line 941, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/_base_client.py", line 1762, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/_base_client.py", line 1576, in request
+    raise self._make_status_error_from_response(err.response) from None
+groq.BadRequestError: Error code: 400 - {'error': {'message': "Failed to call a function. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'I\'m so sorry you\'re dealing with a stressful situation like this. Let me see what I can find out for you. \n\n<function=search_statutes{"query": "squatters rights", "state": "FL"}</function>'}}
+During task with name 'agent' and id '9af0cd7a-64cd-f244-2b01-995cb91c27ca'
+
+--------------------
+Error: Error code: 400 - {'error': {'message': "Failed to call a function. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=search_statutes {"query": "squatters rights", "state": "FL"}</function>'}}
+Traceback (most recent call last):
+  File "/home/dok/Developer/cicero/cicero-backend/main.py", line 21, in chat_endpoint
+    final_state = await app_graph.ainvoke(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3158, in ainvoke
+    async for chunk in self.astream(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 2971, in astream
+    async for _ in runner.atick(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_runner.py", line 304, in atick
+    await arun_with_retry(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_retry.py", line 137, in arun_with_retry
+    return await task.proc.ainvoke(task.input, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 705, in ainvoke
+    input = await asyncio.create_task(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 473, in ainvoke
+    ret = await self.afunc(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/app/agent.py", line 52, in reasoner
+    response = await llm_with_tools.ainvoke(messages)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/runnables/base.py", line 5561, in ainvoke
+    return await self.bound.ainvoke(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 421, in ainvoke
+    llm_result = await self.agenerate_prompt(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1128, in agenerate_prompt
+    return await self.agenerate(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1086, in agenerate
+    raise exceptions[0]
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1339, in _agenerate_with_cache
+    result = await self._agenerate(
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_groq/chat_models.py", line 611, in _agenerate
+    response = await self.async_client.create(messages=message_dicts, **params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/resources/chat/completions.py", line 941, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/_base_client.py", line 1762, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/_base_client.py", line 1576, in request
+    raise self._make_status_error_from_response(err.response) from None
+groq.BadRequestError: Error code: 400 - {'error': {'message': "Failed to call a function. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=search_statutes {"query": "squatters rights", "state": "FL"}</function>'}}
+During task with name 'agent' and id '72dfcd42-23c9-2305-7484-464870523d7e'
+
+--------------------
+Error: Error code: 400 - {'error': {'message': "Failed to call a function. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=search_statutes {"query": "squatters rights", "state": "FL"}</function>'}}
+Traceback (most recent call last):
+  File "/home/dok/Developer/cicero/cicero-backend/main.py", line 21, in chat_endpoint
+    final_state = await app_graph.ainvoke(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3158, in ainvoke
+    async for chunk in self.astream(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 2971, in astream
+    async for _ in runner.atick(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_runner.py", line 304, in atick
+    await arun_with_retry(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_retry.py", line 137, in arun_with_retry
+    return await task.proc.ainvoke(task.input, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 705, in ainvoke
+    input = await asyncio.create_task(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 473, in ainvoke
+    ret = await self.afunc(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/app/agent.py", line 52, in reasoner
+    response = await llm_with_tools.ainvoke(messages)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/runnables/base.py", line 5561, in ainvoke
+    return await self.bound.ainvoke(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 421, in ainvoke
+    llm_result = await self.agenerate_prompt(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1128, in agenerate_prompt
+    return await self.agenerate(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1086, in agenerate
+    raise exceptions[0]
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1339, in _agenerate_with_cache
+    result = await self._agenerate(
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_groq/chat_models.py", line 611, in _agenerate
+    response = await self.async_client.create(messages=message_dicts, **params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/resources/chat/completions.py", line 941, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/_base_client.py", line 1762, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/groq/_base_client.py", line 1576, in request
+    raise self._make_status_error_from_response(err.response) from None
+groq.BadRequestError: Error code: 400 - {'error': {'message': "Failed to call a function. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=search_statutes {"query": "squatters rights", "state": "FL"}</function>'}}
+During task with name 'agent' and id 'b5104b34-b0c9-6cfe-a2fb-c5b5a2bd59ba'
+
+--------------------

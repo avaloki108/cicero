@@ -18,7 +18,10 @@ async def chat_endpoint(request: ChatRequest):
         inputs = {"messages": [HumanMessage(content=request.message)]}
 
         # Run the agent
-        final_state = app_graph.invoke(inputs)
+        final_state = await app_graph.ainvoke(
+            inputs, 
+            config={"recursion_limit": 75} 
+        )
 
         # Extract the final response from the AI
         final_message = final_state["messages"][-1].content
