@@ -27,20 +27,51 @@ async def chat_endpoint(request: ChatRequest):
         messages = history_messages + [current_message]
         inputs = {"messages": messages}
 
-        # Run the agent
-        final_state = await app_graph.ainvoke(
-            inputs, 
-            config={"recursion_limit": 75} 
-        )
+        # Run the agent with recursion limit to prevent infinite loops
+        try:
+            final_state = await app_graph.ainvoke(
+                inputs, 
+                config={"recursion_limit": 20}  # Reduced from 75 to prevent long loops
+            )
 
-        # Extract the final response from the AI
-        final_message = final_state["messages"][-1].content
+            # Extract the final response from the AI
+            final_message = final_state["messages"][-1].content
 
-        return ChatResponse(
-            response=str(final_message),
-            citations=[],  # We will wire up citation extraction later
-            thought_process=[],
-        )
+            return ChatResponse(
+                response=str(final_message),
+                citations=[],  # We will wire up citation extraction later
+                thought_process=[],
+            )
+        except Exception as graph_error:
+            # Handle recursion limit and other graph errors gracefully
+            error_str = str(graph_error)
+            if "recursion_limit" in error_str.lower():
+                # If we hit recursion limit, try to return the last message if available
+                try:
+                    # Get partial state if available
+                    last_ai_message = None
+                    for msg in reversed(inputs["messages"]):
+                        if isinstance(msg, AIMessage) and not hasattr(msg, "tool_calls"):
+                            last_ai_message = msg.content
+                            break
+                    
+                    if last_ai_message:
+                        return ChatResponse(
+                            response=f"{last_ai_message}\n\n(I'm having some trouble finding complete information right now. Please try rephrasing your question.)",
+                            citations=[],
+                            thought_process=[],
+                        )
+                except:
+                    pass
+                
+                return ChatResponse(
+                    response="I'm having trouble processing that request right now. Could you try rephrasing your question or breaking it into smaller parts?",
+                    citations=[],
+                    thought_process=[],
+                )
+            else:
+                # Re-raise other errors to be caught by outer exception handler
+                raise graph_error
     except Exception as e:
         with open("error.log", "a") as f:
             import traceback
