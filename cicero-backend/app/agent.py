@@ -2,7 +2,8 @@ from typing import TypedDict, List, Annotated
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from langchain_groq import ChatGroq
-from langchain_core.messages import SystemMessage, BaseMessage, ToolMessage
+from langchain_core.messages import SystemMessage, BaseMessage, ToolMessage, AIMessage
+from pydantic import SecretStr
 from app.config import settings
 from app.tools.legal_search import search_case_law, search_statutes
 from app.tools.knowledge_base import search_legal_precedents
@@ -16,7 +17,7 @@ class AgentState(TypedDict):
 # 2. Setup the "Brain" (Groq)
 # We use Llama 3 on Groq because it is excellent at following tool-use instructions.
 llm = ChatGroq(
-    temperature=0, model_name=settings.GROQ_MODEL, api_key=settings.GROQ_API_KEY
+    temperature=0, model=settings.GROQ_MODEL, api_key=SecretStr(settings.GROQ_API_KEY)
 )
 
 # Bind the tools to the LLM so it knows they exist
@@ -74,7 +75,6 @@ async def reasoner(state: AgentState):
     except Exception as e:
         print(f"Error in reasoner: {e}")
         # Return a helpful error message instead of crashing
-        from langchain_core.messages import AIMessage
         error_msg = AIMessage(
             content="I'm sorry, I'm having some technical difficulties right now. Please try asking your question again."
         )
@@ -88,7 +88,7 @@ async def tool_executor(state: AgentState):
     last_message = state["messages"][-1]
     
     # Check if the message has tool_calls attribute
-    if not hasattr(last_message, "tool_calls") or not last_message.tool_calls:
+    if not isinstance(last_message, AIMessage) or not last_message.tool_calls:
         print("--- Warning: No tool calls found in last message ---")
         return {"messages": []}
     
@@ -100,7 +100,10 @@ async def tool_executor(state: AgentState):
     for call in tool_calls:
         try:
             tool_name = call.get("name") if isinstance(call, dict) else call.name
-            tool_args = call.get("args") if isinstance(call, dict) else call.get("args", {})
+            # Ensure args is a dict and not None
+            raw_args = call.get("args") if isinstance(call, dict) else call.get("args", {})
+            tool_args = raw_args or {}
+            
             tool_id = call.get("id") if isinstance(call, dict) else call.id
             
             if tool_name == "search_case_law":
@@ -140,7 +143,7 @@ workflow.set_entry_point("agent")
 def should_continue(state: AgentState):
     last_message = state["messages"][-1]
     # Check if message has tool_calls and they're not empty
-    if hasattr(last_message, "tool_calls") and last_message.tool_calls:
+    if isinstance(last_message, AIMessage) and last_message.tool_calls:
         return "tools"
     return END
 

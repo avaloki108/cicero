@@ -1,4 +1,6 @@
 {
     "postman.settings.dotenv-detection-notification-visibility": false,
-    "cmake.ignoreCMakeListsMissing": true
+    "cmake.ignoreCMakeListsMissing": true,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "standard"
 }
