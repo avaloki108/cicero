@@ -67,7 +67,6 @@ def fetch_recent_courtlistener(
         "type": "o",
         "page_size": page_size,
         "date_filed_min": date_min,
-        "order_by": "dateFiled",
     }
 
     docs: List[Dict] = []

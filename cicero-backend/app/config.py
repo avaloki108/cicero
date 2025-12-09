@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     
     PINECONE_API_KEY: str  # Add this!
     PINECONE_INDEX_NAME: str = "cicero-knowledge" # Default index name
+    PINECONE_NAMESPACE: str = "case-law"
 
     # Memory
     QDRANT_URL: str = (

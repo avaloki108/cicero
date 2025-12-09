@@ -293,7 +293,8 @@ class _PromptsSheet extends StatelessWidget {
               child: ListView.separated(
                 physics: const BouncingScrollPhysics(),
                 itemCount: prompts.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                separatorBuilder: (context, _) =>
+                    const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final formatted =
                       prompts[index].replaceAll('[STATE]', stateName);

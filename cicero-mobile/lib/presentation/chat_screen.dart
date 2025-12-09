@@ -65,11 +65,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Future<void> _saveChatToFile() async {
+    final messenger = ScaffoldMessenger.of(context);
     final messages = ref.read(chatProvider).messages;
     if (messages.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No messages to save yet.')),
-      );
+      messenger.showSnackBar(const SnackBar(
+        content: Text('No messages to save yet.'),
+      ));
       return;
     }
 
@@ -89,13 +90,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       }
 
       await file.writeAsString(buffer.toString());
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Saved to ${file.path}')),
-      );
+      messenger.showSnackBar(SnackBar(
+        content: Text('Saved to ${file.path}'),
+      ));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save chat: $e')),
-      );
+      messenger.showSnackBar(SnackBar(
+        content: Text('Could not save chat: $e'),
+      ));
     }
   }
 
