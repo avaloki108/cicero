@@ -442,3 +442,53 @@ groq.BadRequestError: Error code: 400 - {'error': {'message': "Failed to call a 
 During task with name 'agent' and id 'b5104b34-b0c9-6cfe-a2fb-c5b5a2bd59ba'
 
 --------------------
+Error: Unsupported message type: <class 'NoneType'>
+For troubleshooting, visit: https://docs.langchain.com/oss/python/langchain/errors/MESSAGE_COERCION_FAILURE 
+Traceback (most recent call last):
+  File "/home/dok/Developer/cicero/cicero-backend/main.py", line 87, in chat_endpoint
+    raise graph_error
+  File "/home/dok/Developer/cicero/cicero-backend/main.py", line 45, in chat_endpoint
+    final_state = await app_graph.ainvoke(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3158, in ainvoke
+    async for chunk in self.astream(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 2971, in astream
+    async for _ in runner.atick(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_runner.py", line 304, in atick
+    await arun_with_retry(
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_retry.py", line 137, in arun_with_retry
+    return await task.proc.ainvoke(task.input, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 711, in ainvoke
+    input = await step.ainvoke(input, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 473, in ainvoke
+    ret = await self.afunc(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/graph/_branch.py", line 178, in _aroute
+    value = reader(config)
+            ^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_read.py", line 89, in do_read
+    return read(select, fresh)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/pregel/_algo.py", line 201, in local_read
+    cc.update(updated[k])
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/channels/binop.py", line 122, in update
+    self.value = self.operator(self.value, value)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/graph/message.py", line 46, in _add_messages
+    return func(left, right, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langgraph/graph/message.py", line 200, in add_messages
+    for m in convert_to_messages(right)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/messages/utils.py", line 388, in convert_to_messages
+    return [_convert_to_message(m) for m in messages]
+            ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dok/Developer/cicero/cicero-backend/venv/lib/python3.12/site-packages/langchain_core/messages/utils.py", line 366, in _convert_to_message
+    raise NotImplementedError(msg)
+NotImplementedError: Unsupported message type: <class 'NoneType'>
+For troubleshooting, visit: https://docs.langchain.com/oss/python/langchain/errors/MESSAGE_COERCION_FAILURE 
+During task with name 'agent' and id '590b134d-28da-a263-3e64-eee9695a4af6'
+
+--------------------

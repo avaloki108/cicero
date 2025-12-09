@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:path_provider/path_provider.dart';
 import '../core/theme_cicero.dart';
 import 'chat_state_notifier.dart';
 import 'providers.dart';
@@ -58,6 +60,45 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  void _hideKeyboard() {
+    FocusScope.of(context).unfocus();
+  }
+
+  Future<void> _saveChatToFile() async {
+    final messages = ref.read(chatProvider).messages;
+    if (messages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No messages to save yet.')),
+      );
+      return;
+    }
+
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final ts = DateTime.now();
+      final filename =
+          'cicero-chat-${ts.year}${ts.month.toString().padLeft(2, '0')}${ts.day.toString().padLeft(2, '0')}-${ts.hour.toString().padLeft(2, '0')}${ts.minute.toString().padLeft(2, '0')}${ts.second.toString().padLeft(2, '0')}.txt';
+      final file = File('${dir.path}/$filename');
+
+      final buffer = StringBuffer();
+      for (final msg in messages) {
+        final speaker = msg.isUser ? 'You' : 'Cicero';
+        buffer.writeln('$speaker (${msg.timestamp.toLocal()}):');
+        buffer.writeln(msg.content);
+        buffer.writeln('---');
+      }
+
+      await file.writeAsString(buffer.toString());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Saved to ${file.path}')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not save chat: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider);
@@ -76,115 +117,130 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         title: const Text('Cicero'),
         actions: [
           IconButton(
+            tooltip: 'Save chat to device',
+            icon: const Icon(LucideIcons.download),
+            onPressed: _saveChatToFile,
+          ),
+          IconButton(
+            tooltip: 'Hide keyboard',
+            icon: const Icon(Icons.keyboard_hide_outlined),
+            onPressed: _hideKeyboard,
+          ),
+          IconButton(
             icon: const Icon(LucideIcons.plus),
             onPressed: () => ref.read(chatProvider.notifier).clearChat(),
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // MESSAGE LIST
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount:
-                  chatState.messages.length + (chatState.isLoading ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == chatState.messages.length) {
-                  return const _LoadingBubble();
-                }
-                final msg = chatState.messages[index];
-                return _MessageBubble(message: msg);
-              },
-            ),
-          ),
-
-          // INPUT AREA
-          Container(
-            padding: EdgeInsets.fromLTRB(
-              16,
-              12,
-              16,
-              MediaQuery.of(context).padding.bottom + 12,
-            ),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              border: Border(
-                top: BorderSide(color: Theme.of(context).dividerColor),
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: _hideKeyboard,
+        child: Column(
+          children: [
+            // MESSAGE LIST
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(16),
+                itemCount:
+                    chatState.messages.length + (chatState.isLoading ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == chatState.messages.length) {
+                    return const _LoadingBubble();
+                  }
+                  final msg = chatState.messages[index];
+                  return _MessageBubble(message: msg);
+                },
               ),
             ),
-            child: Row(
-              children: [
-                // MICROPHONE BUTTON (NEW)
-                GestureDetector(
-                  onTap: _toggleListening,
-                  child: CircleAvatar(
-                    backgroundColor: _isListening
-                        ? Colors.red
-                        : Colors.grey.shade200,
-                    radius: 20,
-                    child: Icon(
-                      _isListening ? LucideIcons.micOff : LucideIcons.mic,
-                      color: _isListening ? Colors.white : Colors.black54,
-                      size: 20,
+
+            // INPUT AREA
+            Container(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                12,
+                16,
+                MediaQuery.of(context).padding.bottom + 12,
+              ),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                border: Border(
+                  top: BorderSide(color: Theme.of(context).dividerColor),
+                ),
+              ),
+              child: Row(
+                children: [
+                  // MICROPHONE BUTTON (NEW)
+                  GestureDetector(
+                    onTap: _toggleListening,
+                    child: CircleAvatar(
+                      backgroundColor: _isListening
+                          ? Colors.red
+                          : Colors.grey.shade200,
+                      radius: 20,
+                      child: Icon(
+                        _isListening ? LucideIcons.micOff : LucideIcons.mic,
+                        color: _isListening ? Colors.white : Colors.black54,
+                        size: 20,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
+                  const SizedBox(width: 8),
 
-                // TEXT FIELD (EXISTING)
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF2C2C2E)
-                          : const Color(0xFFF2F2F7),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: TextField(
-                      controller: _controller,
-                      maxLines: 4,
-                      minLines: 1,
-                      decoration: InputDecoration(
-                        hintText: _isListening
-                            ? 'Listening...'
-                            : 'Ask a legal question...', // Change hint
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
+                  // TEXT FIELD (EXISTING)
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF2C2C2E)
+                            : const Color(0xFFF2F2F7),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: TextField(
+                        controller: _controller,
+                        maxLines: 4,
+                        minLines: 1,
+                        decoration: InputDecoration(
+                          hintText: _isListening
+                              ? 'Listening...'
+                              : 'Ask a legal question...', // Change hint
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
+                  const SizedBox(width: 8),
 
-                // SEND BUTTON (EXISTING)
-                GestureDetector(
-                  onTap: () {
-                    if (_controller.text.trim().isNotEmpty) {
-                      ref
-                          .read(chatProvider.notifier)
-                          .sendMessage(_controller.text, stateAbbr);
-                      _controller.clear();
-                    }
-                  },
-                  child: CircleAvatar(
-                    backgroundColor: CiceroTheme.primaryLight,
-                    radius: 20,
-                    child: const Icon(
-                      LucideIcons.send,
-                      color: Colors.white,
-                      size: 18,
+                  // SEND BUTTON (EXISTING)
+                  GestureDetector(
+                    onTap: () {
+                      if (_controller.text.trim().isNotEmpty) {
+                        ref
+                            .read(chatProvider.notifier)
+                            .sendMessage(_controller.text, stateAbbr);
+                        _controller.clear();
+                        _hideKeyboard();
+                      }
+                    },
+                    child: CircleAvatar(
+                      backgroundColor: CiceroTheme.primaryLight,
+                      radius: 20,
+                      child: const Icon(
+                        LucideIcons.send,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,9 +1,20 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from app.models import ChatRequest, ChatResponse
 from app.agent import app_graph
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
+from app.tools.legal_search import search_case_law
 
 app = FastAPI(title="Cicero API", version="2.0")
+
+# Add CORS middleware to allow web app requests
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, replace with specific origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
@@ -23,9 +34,12 @@ async def chat_endpoint(request: ChatRequest):
                 elif item["role"] == "assistant":
                     history_messages.append(AIMessage(content=item["content"]))
             # ignore other roles or malformed items
-        current_message = HumanMessage(content=request.message)
+        
+        # Include the user's state in the message context
+        user_state = request.state or "US"
+        current_message = HumanMessage(content=f"[User is in {user_state}] {request.message}")
         messages = history_messages + [current_message]
-        inputs = {"messages": messages}
+        inputs = {"messages": messages, "user_state": user_state}
 
         # Run the agent with recursion limit to prevent infinite loops
         try:
@@ -36,6 +50,36 @@ async def chat_endpoint(request: ChatRequest):
 
             # Extract the final response from the AI
             final_message = final_state["messages"][-1].content
+
+            # Fallback: if the model failed to deliver useful info, run a case-law search directly.
+            msg_lower = str(final_message).lower() if final_message else ""
+            # Grab the most recent tool output if we need to fall back
+            last_tool_content = None
+            for m in reversed(final_state.get("messages", [])):
+                if isinstance(m, ToolMessage) and m.content:
+                    last_tool_content = str(m.content)
+                    break
+            fallback_triggers = [
+                "i'm having trouble",
+                "technical difficulties",
+                "couldn't find",
+                "search_statutes(",
+                "trouble processing",
+            ]
+            if any(trigger in msg_lower for trigger in fallback_triggers):
+                # If we have tool results already, surface them directly.
+                if last_tool_content:
+                    final_message = last_tool_content
+                else:
+                    # Otherwise run a quick case-law search as a backup.
+                    try:
+                        case_result = await search_case_law.ainvoke({
+                            "query": request.message,
+                            "jurisdiction": request.state or "US",
+                        })
+                        final_message = str(case_result)
+                    except Exception:
+                        pass
 
             return ChatResponse(
                 response=str(final_message),

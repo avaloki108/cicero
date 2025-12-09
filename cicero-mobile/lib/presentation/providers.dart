@@ -4,6 +4,25 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../services/cicero_api_client.dart';
 
+String _sanitizeBaseUrl(String url) {
+  var cleaned = url.trim();
+  if (cleaned.isEmpty) return CiceroApiClient.defaultBaseUrl;
+  if (!cleaned.startsWith('http://') && !cleaned.startsWith('https://')) {
+    cleaned = 'http://$cleaned';
+  }
+  try {
+    final uri = Uri.parse(cleaned);
+    final port = uri.hasPort && uri.port == 8013 ? 8000 : (uri.hasPort ? uri.port : null);
+    final normalized = uri.replace(port: port == 0 ? null : port);
+    cleaned = normalized.toString();
+  } catch (_) {
+    // keep cleaned as-is if parse fails
+  }
+  return cleaned.endsWith('/')
+      ? cleaned.substring(0, cleaned.length - 1)
+      : cleaned;
+}
+
 // --- CORE SERVICES ---
 
 // The only API client we need now. It talks to your Python Backend.
@@ -42,11 +61,7 @@ class ApiBaseUrlNotifier extends StateNotifier<String> {
   final Box<dynamic> _box;
 
   void setBaseUrl(String url) {
-    var cleaned = url.trim();
-    if (cleaned.isEmpty) cleaned = CiceroApiClient.defaultBaseUrl;
-    if (!cleaned.startsWith('http://') && !cleaned.startsWith('https://')) {
-      cleaned = 'http://$cleaned';
-    }
+    final cleaned = _sanitizeBaseUrl(url);
     _box.put('api_base_url', cleaned);
     state = cleaned;
   }
@@ -73,9 +88,14 @@ final themeModeProvider =
 final apiBaseUrlProvider =
     StateNotifierProvider<ApiBaseUrlNotifier, String>((ref) {
   final box = Hive.box('cicero_settings');
-  final initial = (box.get('api_base_url') as String?) ??
+  final stored = (box.get('api_base_url') as String?) ??
       CiceroApiClient.defaultBaseUrl;
-  return ApiBaseUrlNotifier(box, initial);
+  final sanitized = _sanitizeBaseUrl(stored);
+  // If we changed the value (e.g., migrating 8013 -> 8000), persist it.
+  if (sanitized != stored) {
+    box.put('api_base_url', sanitized);
+  }
+  return ApiBaseUrlNotifier(box, sanitized);
 });
 
 final tabIndexProvider = StateProvider<int>((ref) => 0);

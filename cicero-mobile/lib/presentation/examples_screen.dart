@@ -12,46 +12,86 @@ class ExamplesScreen extends ConsumerWidget {
   static final List<Map<String, dynamic>> categories = [
     {
       'title': 'Contract Review',
+      'subtitle': 'Summaries, red flags, negotiation angles',
       'icon': LucideIcons.fileText,
       'color': CiceroTheme.pastelPurple,
       'textColor': Colors.black87,
       'prompts': [
-        'Review this employment contract for red flags',
-        'Explain the terms of this lease agreement',
-        'What should I look for in a non-compete clause?',
+        'Summarize the key duties, renewal terms, and payment triggers in this contract.',
+        'Flag indemnity, limitation of liability, venue, and governing law clauses that could hurt me.',
+        'Draft plain-language bullets for the confidentiality and IP ownership sections.',
+        'Compare these terms to market norms and suggest 3 negotiation edits.',
+        'Check termination/auto-renew clauses for notice deadlines I should calendar.',
       ],
     },
     {
       'title': 'Legal Research',
+      'subtitle': 'Cases, statutes, standards',
       'icon': LucideIcons.search,
       'color': CiceroTheme.pastelBlue,
       'textColor': Colors.black87,
       'prompts': [
-        'Find recent cases about tenant rights in [STATE]',
-        'What are the statute of limitations for personal injury?',
-        'Research state laws on small business formation',
+        'Find [STATE] cases on probable cause for traffic stops and summarize the rule.',
+        'What is the statute of limitations for breach of contract in [STATE]?',
+        'Research how enforceable non-compete agreements are in [STATE] for employees vs contractors.',
+        'Find federal cases on ADA reasonable accommodation for remote work.',
+        'What factors do [STATE] courts use to pierce the corporate veil?',
       ],
     },
     {
       'title': 'Document Drafting',
+      'subtitle': 'Letters, agreements, checklists',
       'icon': LucideIcons.penTool,
       'color': CiceroTheme.pastelRed,
       'textColor': Colors.black87,
       'prompts': [
-        'Help me draft a demand letter',
-        'Create a simple will template',
-        'Draft a partnership agreement',
+        'Draft a demand letter for unpaid invoices under [STATE] law.',
+        'Create a simple LLC operating agreement outline tailored to [STATE].',
+        'Draft a cease-and-desist letter for trademark or brand misuse.',
+        'Write a settlement proposal email with concessions and next steps.',
+        'Make a checklist of exhibits I should collect before filing.',
       ],
     },
     {
       'title': 'State Laws',
+      'subtitle': 'Local rules, filings, deadlines',
       'icon': LucideIcons.mapPin,
       'color': CiceroTheme.pastelOrange,
       'textColor': Colors.black87,
       'prompts': [
-        'What are the gun laws in [STATE]?',
-        'Explain [STATE] labor laws regarding breaks',
-        'How to register a business in [STATE]?',
+        'Explain [STATE] landlord entry and notice requirements.',
+        'Steps and forms to file small claims in [STATE] for a security deposit.',
+        'What wage, overtime, and meal-break rules apply in [STATE]?',
+        'Outline [STATE] requirements to register a business name or LLC.',
+        'What are [STATE] rules for carrying or transporting a firearm?',
+      ],
+    },
+    {
+      'title': 'Court Prep & Strategy',
+      'subtitle': 'Timelines, arguments, evidence',
+      'icon': LucideIcons.gavel,
+      'color': CiceroTheme.pastelGreen,
+      'textColor': Colors.black87,
+      'prompts': [
+        'Build an argument outline with elements and supporting authority in [STATE].',
+        'Draft direct- and cross-exam questions for a key witness.',
+        'Create a timeline of facts and highlight gaps in proof.',
+        'Suggest discovery requests (interrogatories/requests for production) for this dispute.',
+        'Explain how to preserve objections and make a record in [STATE] court.',
+      ],
+    },
+    {
+      'title': 'Compliance & Policies',
+      'subtitle': 'HR, privacy, business ops',
+      'icon': LucideIcons.shieldCheck,
+      'color': CiceroTheme.pastelTeal,
+      'textColor': Colors.black87,
+      'prompts': [
+        'Draft a privacy policy for an online store serving [STATE] customers.',
+        'Create an employee handbook section on PTO, sick leave, and breaks for [STATE].',
+        'Checklist for data breach notification obligations in [STATE].',
+        'Outline steps to register and maintain a trademark.',
+        'Draft a vendor NDA with a short data security addendum.',
       ],
     },
   ];
@@ -72,7 +112,7 @@ class ExamplesScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            "Select a category to get started.",
+            "Pick a workflow, tap a prompt, and we’ll tailor it to $stateName.",
             style: TextStyle(
               fontSize: 16,
               color: Theme.of(context).brightness == Brightness.dark
@@ -90,19 +130,21 @@ class ExamplesScreen extends ConsumerWidget {
               crossAxisCount: 2,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: 0.85, // Taller cards like the design
+              childAspectRatio: 0.78, // Taller cards to prevent text overflow
             ),
             itemCount: categories.length,
             itemBuilder: (context, index) {
               final cat = categories[index];
               return _CategoryCard(
                 title: cat['title'],
+                subtitle: cat['subtitle'],
                 icon: cat['icon'],
                 color: cat['color'],
                 textColor: cat['textColor'],
                 onTap: () {
                   // Show the prompts bottom sheet
                   showModalBottomSheet(
+                    isScrollControlled: true,
                     context: context,
                     backgroundColor: Colors.transparent,
                     builder: (ctx) => _PromptsSheet(
@@ -135,6 +177,7 @@ class ExamplesScreen extends ConsumerWidget {
 
 class _CategoryCard extends StatelessWidget {
   final String title;
+  final String subtitle;
   final IconData icon;
   final Color color;
   final Color textColor;
@@ -142,6 +185,7 @@ class _CategoryCard extends StatelessWidget {
 
   const _CategoryCard({
     required this.title,
+    required this.subtitle,
     required this.icon,
     required this.color,
     required this.textColor,
@@ -159,8 +203,9 @@ class _CategoryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24), // Highly rounded corners
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
               padding: const EdgeInsets.all(10),
@@ -170,6 +215,7 @@ class _CategoryCard extends StatelessWidget {
               ),
               child: Icon(icon, color: textColor, size: 28),
             ),
+            const SizedBox(height: 12),
             Text(
               title,
               style: TextStyle(
@@ -178,7 +224,22 @@ class _CategoryCard extends StatelessWidget {
                 color: textColor,
                 height: 1.2,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: textColor.withValues(alpha: 0.8),
+                height: 1.3,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const Spacer(),
           ],
         ),
       ),
@@ -202,6 +263,7 @@ class _PromptsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final maxHeight = MediaQuery.of(context).size.height * 0.7;
 
     return Container(
       decoration: BoxDecoration(
@@ -209,42 +271,56 @@ class _PromptsSheet extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          ...prompts.map((prompt) {
-            final formatted = prompt.replaceAll('[STATE]', stateName);
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: InkWell(
-                onTap: () => onSelect(formatted),
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.grey[800] : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    formatted,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: isDark ? Colors.white : Colors.black87,
-                    ),
-                  ),
-                ),
+      child: SizedBox(
+        height: maxHeight,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Prompts auto-fill with $stateName. Attach documents first if you want them considered.",
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? Colors.grey[400] : Colors.grey[700],
               ),
-            );
-          }),
-          const SizedBox(height: 20),
-        ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView.separated(
+                physics: const BouncingScrollPhysics(),
+                itemCount: prompts.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final formatted =
+                      prompts[index].replaceAll('[STATE]', stateName);
+                  return InkWell(
+                    onTap: () => onSelect(formatted),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.grey[800] : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        formatted,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

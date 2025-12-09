@@ -4,7 +4,8 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # The "Brain" (Fast Reasoning)
     GROQ_API_KEY: str
-    GROQ_MODEL: str = "llama-3.3-70b-versatile"  # Currently supported Groq model
+    # llama-3.3-70b-versatile is the best available on standard Groq plan
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
 
     # The "Reader" (Large Context & Embeddings)
     GEMINI_API_KEY: str

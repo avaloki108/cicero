@@ -4,6 +4,103 @@ from app.config import settings
 from typing import Optional, List, Dict
 
 
+# State abbreviation to CourtListener court ID mapping
+# Focus on main appellate/supreme courts + federal courts for each state
+STATE_TO_COURT = {
+    # California - Supreme, Appeals, Federal
+    "CA": [
+        "cal",
+        "calctapp",
+        "calctapp1d",
+        "calctapp2d",
+        "calctapp3d",
+        "calctapp4d",
+        "calctapp5d",
+        "calctapp6d",
+        "ca9",
+        "cacd",
+        "caed",
+        "cand",
+        "casd",
+        "cacb",
+        "caeb",
+        "canb",
+        "casb",
+    ],
+    
+    # Colorado - Supreme, Appeals, Federal  
+    "CO": ["colo", "coloctapp", "coldistct", "cod", "cob"],
+    
+    # New York - Court of Appeals, Appellate Div, Supreme, Federal
+    "NY": [
+        "ny",
+        "nyappdiv",
+        "nyappterm",
+        "nysupct",
+        "ca2",
+        "nyed",
+        "nynd",
+        "nysd",
+        "nywd",
+        "nyeb",
+        "nynb",
+        "nysb",
+        "nywb",
+    ],
+    
+    # Texas - Supreme, Criminal Appeals, Civil Appeals, Federal
+    "TX": [
+        "tex",
+        "texcrimapp",
+        "texapp",
+        "txed",
+        "txnd",
+        "txsd",
+        "txwd",
+        "txeb",
+        "txnb",
+        "txsb",
+        "txwb",
+    ],
+    
+    # Florida - Supreme, District Courts of Appeal, Federal
+    "FL": [
+        "fla",
+        "fladistctapp",
+        "fladistctapp1",
+        "fladistctapp2",
+        "fladistctapp3",
+        "fladistctapp4",
+        "fladistctapp5",
+        "fladistctapp6",
+        "flmd",
+        "flnd",
+        "flsd",
+        "flmb",
+        "flnb",
+        "flsb",
+    ],
+    
+    # Federal courts (US-wide)
+    "US": [
+        "scotus",
+        "ca1",
+        "ca2",
+        "ca3",
+        "ca4",
+        "ca5",
+        "ca6",
+        "ca7",
+        "ca8",
+        "ca9",
+        "ca10",
+        "ca11",
+        "cadc",
+        "cafc",
+    ],
+}
+
+
 # --- Helper for HTTP Requests ---
 async def fetch_json(url: str, params: dict = None, headers: dict = None) -> Dict:
     async with httpx.AsyncClient() as client:
@@ -21,24 +118,41 @@ async def fetch_json(url: str, params: dict = None, headers: dict = None) -> Dic
 @tool
 async def search_case_law(query: str, jurisdiction: str = None) -> str:
     """
-    Search for real US court opinions and case law.
+    Search for real US court opinions and case law from CourtListener database.
+    
     Arguments:
-      query: The legal topic or keywords (e.g. "traffic stop probable cause").
-      jurisdiction: Optional. The court ID (e.g., "scotus" for Supreme Court, "ca9" for 9th Circuit).
-                    Leave empty to search all US courts.
+      query: Legal search terms. USE LEGAL TERMINOLOGY for best results!
+             Good examples: "fourth amendment search seizure", "miranda rights", 
+             "probable cause vehicle", "DUI blood draw", "Terry stop frisk"
+             Bad examples: "traffic stop rights", "what are my rights" (too vague)
+      jurisdiction: Optional. A 2-letter state code (e.g., "CO", "CA", "TX") to search that state's courts,
+                    or "US" for federal courts. Leave empty to search all US courts.
+    
+    Tips: Convert user questions to legal concepts. "pulled over rights" -> "fourth amendment traffic stop"
     """
-    url = "https://www.courtlistener.com/api/rest/v3/search/"
+    # Use v4 API
+    url = "https://www.courtlistener.com/api/rest/v4/search/"
     headers = {"Authorization": f"Token {settings.COURTLISTENER_API_KEY}"}
     params = {
         "q": query,
-        "type": "o",  # 'o' = Opinion
-        "order_by": "score desc",
-        "stat_Precedential": "on",  # Only cite precedential cases
+        "type": "o",  # Opinion search type
     }
-    if jurisdiction:
-        params["court"] = jurisdiction
+    
+    print(f"--- Case law query: '{query}' ---")
+    
+    # Convert state abbreviation to CourtListener court IDs
+    if jurisdiction and jurisdiction.upper() in STATE_TO_COURT:
+        courts = STATE_TO_COURT[jurisdiction.upper()]
+        params["court"] = courts  # httpx encodes lists as repeated params (court=a&court=b)
+        print(f"--- Searching courts: {','.join(courts)} ---")
+    elif jurisdiction:
+        # Accept a comma-separated list or a single direct CourtListener ID
+        courts = [c.strip() for c in jurisdiction.split(",") if c.strip()]
+        params["court"] = courts if len(courts) > 1 else courts[0]
+        print(f"--- Searching courts: {jurisdiction} ---")
 
     data = await fetch_json(url, params, headers)
+    print(f"--- CourtListener response count: {data.get('count', 'N/A')} ---")
 
     if "error" in data:
         return f"Error searching cases: {data['error']}"
@@ -51,11 +165,22 @@ async def search_case_law(query: str, jurisdiction: str = None) -> str:
     formatted_cases = []
     for case in results[:3]:
         name = case.get("caseName", "Unknown Case")
-        citation = case.get("citation", ["No citation"])[0]
-        snippet = case.get("snippet", "No summary available.")
+        # citation can be None or a list
+        citation_list = case.get("citation")
+        citation = citation_list[0] if citation_list else case.get("docketNumber", "No citation")
+        
+        # In v4 API, snippet is often in opinions[0].snippet
+        snippet = None
+        opinions = case.get("opinions", [])
+        if opinions and len(opinions) > 0:
+            snippet = opinions[0].get("snippet")
+        if not snippet:
+            snippet = case.get("snippet") or case.get("syllabus") or case.get("suitNature") or "No summary available - see full case for details."
+        
         date = case.get("dateFiled", "Unknown date")
+        court = case.get("court", "Unknown court")
         formatted_cases.append(
-            f"CASE: {name} ({date})\nCITATION: {citation}\nSUMMARY: {snippet}\n---"
+            f"CASE: {name} ({date})\nCOURT: {court}\nCITATION: {citation}\nSUMMARY: {snippet}\n---"
         )
 
     return "\n".join(formatted_cases)

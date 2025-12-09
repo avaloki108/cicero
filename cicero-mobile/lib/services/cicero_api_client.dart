@@ -15,12 +15,12 @@ class CiceroApiClient {
 
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       // Android emulator cannot reach localhost directly
-      return 'http://10.0.2.2:8013';
+      return 'http://10.0.2.2:8000';
       // Using local IP for physical device testing
-      // return 'http://192.168.1.24:8013';
+      // return 'http://192.168.1.24:8000';
     }
 
-    return 'http://127.0.0.1:8013';
+    return 'http://127.0.0.1:8000';
   }
 
   static String _normalizeBaseUrl(String url) {
@@ -29,12 +29,25 @@ class CiceroApiClient {
         !normalized.startsWith('https://')) {
       normalized = 'http://$normalized';
     }
+    try {
+      final parsed = Uri.parse(normalized);
+      // Force legacy 8013 ports to 8000.
+      final adjustedPort =
+          parsed.hasPort && parsed.port == 8013 ? 8000 : parsed.port;
+      normalized = parsed.replace(port: adjustedPort == 0 ? null : adjustedPort).toString();
+    } catch (_) {
+      // If parse fails, keep best-effort normalized string.
+    }
     return normalized.endsWith('/')
         ? normalized.substring(0, normalized.length - 1)
         : normalized;
   }
 
-  Future<CiceroResponse> sendMessage(String message, String? state, {List<Map<String, dynamic>> history = const []}) async {
+  Future<CiceroResponse> sendMessage(
+    String message,
+    String? state, {
+    List<Map<String, dynamic>> history = const [],
+  }) async {
     try {
       final response = await http
           .post(

@@ -17,6 +17,8 @@ class CiceroTheme {
   static const Color pastelBlue = Color(0xFFCDECF8);
   static const Color pastelRed = Color(0xFFFBD1D4);
   static const Color pastelOrange = Color(0xFFFFE5D8);
+  static const Color pastelGreen = Color(0xFFDFF7E5);
+  static const Color pastelTeal = Color(0xFFD5F2F0);
 
   static ThemeData light() {
     return ThemeData(
