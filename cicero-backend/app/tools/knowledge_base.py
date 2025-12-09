@@ -12,11 +12,11 @@ def search_legal_precedents(query: str):
     This tool uses RAG (Retrieval-Augmented Generation) to find relevant
     context from the knowledge base and returns formatted results.
     """
-    # Use RAG service to retrieve context
+    # Use RAG service to retrieve context with higher threshold for relevance
     context, matches = rag_service.retrieve_context(
         query=query,
         top_k=5,
-        min_score=0.7,
+        min_score=0.75,  # Higher threshold to ensure relevance
         max_tokens=2000
     )
     

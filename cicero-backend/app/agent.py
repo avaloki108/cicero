@@ -46,6 +46,7 @@ async def reasoner(state: AgentState):
             break
     
     # Retrieve RAG context if we have a user message
+    # Only retrieve if we have a clear query that might benefit from knowledge base
     rag_context = ""
     rag_matches = []
     if latest_user_message:
@@ -53,12 +54,18 @@ async def reasoner(state: AgentState):
             context, matches = rag_service.retrieve_context(
                 query=latest_user_message,
                 top_k=3,
-                min_score=0.6,  # Lower threshold to get more context
+                min_score=0.75,  # Higher threshold to ensure relevance
                 max_tokens=2000
             )
-            if context:
-                rag_context = context
-                rag_matches = matches
+            # Only use context if we have high-quality matches
+            if context and matches:
+                # Check if top match has good relevance
+                top_score = matches[0].get("score", 0.0) if matches else 0.0
+                if top_score >= 0.75:  # Only use if top result is highly relevant
+                    rag_context = context
+                    rag_matches = matches
+                else:
+                    print(f"RAG context rejected: top score {top_score} below threshold")
         except Exception as e:
             print(f"Error retrieving RAG context: {e}")
             # Continue without RAG context if retrieval fails
@@ -78,11 +85,19 @@ TOOL USAGE GUIDELINES:
 - You have tools available: search_case_law, search_statutes, search_legal_precedents
 - ONLY use tools when you need to look up specific cases, statutes, or legal precedents
 - When searching statutes, ALWAYS use state="{user_state}" for the user's state
-- Default to search_case_law for legal rules, standards, and requirements. ONLY use search_statutes if the user explicitly asks about a statute/bill/code/act/section or legislation.
+
+IMPORTANT TOOL SELECTION:
+- search_case_law: Use for legal rules, standards, requirements, case law, court decisions, and established legal concepts (like "statute of limitations", "Miranda rights", "probable cause", etc.)
+- search_statutes: ONLY use for RECENT BILLS or LEGISLATION (bills being considered, recently passed laws). DO NOT use for established legal concepts like "statute of limitations", "eviction notice requirements", etc. Those are found in case law or state codes, not recent bills.
+- search_legal_precedents: Use for documents in the knowledge base (uploaded PDFs, case notes, etc.)
+
+For questions about established legal concepts (statute of limitations, tenant rights, search and seizure, etc.), use search_case_law, NOT search_statutes.
+
 - If you already have tool results, synthesize them—do NOT call the same tool again for the same question unless you need a different scope.
 - For general legal concepts or advice, you can answer directly from your knowledge
 - When you DO use a tool, just make the function call - the system handles execution
-- After getting tool results, synthesize them into a clear, friendly response. If you received any results, do not say you couldn't find information.
+- After getting tool results, check if they're actually relevant to the question. If a result is about a completely different topic, say "I couldn't find specific information about that, but let me try a different search" and use a different tool or approach.
+- Synthesize tool results into a clear, friendly response. If you received any results, do not say you couldn't find information UNLESS the results are clearly irrelevant.
 
 RESPONSE STYLE:
 - Acknowledge the person's concerns first
@@ -95,13 +110,19 @@ RESPONSE STYLE:
         base_system_content += f"""
 
 KNOWLEDGE BASE CONTEXT:
-The following information from our knowledge base may be relevant to the user's question. Use this context to provide more accurate and informed answers. If the context doesn't fully answer the question, you can still use tools to search for additional information.
+The following information from our knowledge base has been retrieved. CRITICALLY IMPORTANT: Only use this context if it is DIRECTLY relevant to the user's question. If the context is about a completely different topic (e.g., user asks about warrants but context is about bankruptcy), IGNORE IT COMPLETELY and do not mention it. Only reference context that actually helps answer the user's specific question.
+
+If the context is relevant, use it to provide more accurate answers. If it's not relevant, ignore it and use tools instead.
 
 START KNOWLEDGE BASE CONTEXT
 {rag_context}
 END KNOWLEDGE BASE CONTEXT
 
-When referencing information from the knowledge base context above, you can mention the source. However, prioritize using tools (search_case_law, search_statutes, search_legal_precedents) for the most up-to-date and comprehensive legal information."""
+CRITICAL: Before using any information from the knowledge base context above:
+1. Check if it's actually relevant to the user's question
+2. If NOT relevant (different topic/subject), IGNORE IT and use tools (search_case_law, search_statutes, search_legal_precedents) instead
+3. If relevant, you can mention the source when using it
+4. NEVER mention or cite irrelevant context - it will confuse the user"""
 
     system_prompt = SystemMessage(content=base_system_content)
 
@@ -206,6 +227,27 @@ async def handle_xml_tool_call(content: str, messages: list, user_state: str = "
         return None
 
 
+def _check_result_relevance(query: str, result: str) -> bool:
+    """
+    Simple check to see if a tool result is relevant to the query.
+    Returns True if relevant, False if clearly irrelevant.
+    """
+    query_lower = query.lower()
+    result_lower = result.lower()
+    
+    # Extract key terms from query (remove common words)
+    stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'what', 'when', 'where', 'why', 'how', 'about', 'can', 'could', 'should', 'would', 'do', 'does', 'did', 'my', 'me', 'i'}
+    query_words = set(query_lower.split()) - stop_words
+    
+    # Check if any key query terms appear in the result
+    if len(query_words) > 0:
+        matches = sum(1 for word in query_words if word in result_lower)
+        # Require at least one key term match
+        return matches > 0
+    
+    return True  # If no meaningful terms, don't filter
+
+
 async def tool_executor(state: AgentState):
     """
     The action node. This executes the tools Cicero asked for.
@@ -216,6 +258,13 @@ async def tool_executor(state: AgentState):
     if not isinstance(last_message, AIMessage) or not last_message.tool_calls:
         print("--- Warning: No tool calls found in last message ---")
         return {"messages": []}
+    
+    # Get the original user query for relevance checking
+    user_query = ""
+    for msg in reversed(state["messages"]):
+        if isinstance(msg, HumanMessage):
+            user_query = msg.content
+            break
     
     tool_calls = last_message.tool_calls
     results = []
@@ -233,9 +282,17 @@ async def tool_executor(state: AgentState):
             
             if tool_name == "search_case_law":
                 res = await search_case_law.ainvoke(tool_args)
+                # Check relevance
+                if user_query and not _check_result_relevance(user_query, str(res)):
+                    print(f"--- Warning: search_case_law result may not be relevant to query ---")
+                    res = f"Note: The search results may not be directly relevant to your question. {res}"
                 results.append((tool_id, res, tool_name))
             elif tool_name == "search_statutes":
                 res = await search_statutes.ainvoke(tool_args)
+                # Check relevance - statutes tool is more prone to irrelevant results
+                if user_query and not _check_result_relevance(user_query, str(res)):
+                    print(f"--- Warning: search_statutes result may not be relevant to query ---")
+                    res = f"Note: This result may not be directly relevant to your question. The search_statutes tool finds recent bills, not established legal concepts. For questions about established laws like 'statute of limitations', try search_case_law instead. {res}"
                 results.append((tool_id, res, tool_name))
             elif tool_name == "search_legal_precedents":
                 res = await search_legal_precedents.ainvoke(tool_args)

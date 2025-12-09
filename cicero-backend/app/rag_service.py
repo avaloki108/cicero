@@ -10,6 +10,7 @@ This module provides RAG functionality for the Cicero application:
 from typing import List, Dict, Any, Optional, Tuple
 from pinecone import Pinecone, SearchQuery
 from app.config import settings
+import re
 
 
 class RAGService:
@@ -31,11 +32,32 @@ class RAGService:
             if ns_clean not in self.namespaces:
                 self.namespaces.append(ns_clean)
     
+    def _is_relevant(self, query: str, text: str, case_name: str = "") -> bool:
+        """
+        Simple relevance check - extract key terms from query and check if they appear in text.
+        This is a basic filter to catch obviously irrelevant results.
+        """
+        # Extract key terms from query (remove common words)
+        stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'what', 'when', 'where', 'why', 'how', 'about', 'can', 'could', 'should', 'would', 'do', 'does', 'did'}
+        query_lower = query.lower()
+        query_words = set(re.findall(r'\b\w+\b', query_lower)) - stop_words
+        
+        # Check text and case name
+        text_lower = (text + " " + case_name).lower()
+        
+        # If we have meaningful query terms, check if any appear
+        if len(query_words) > 0:
+            matches = sum(1 for word in query_words if word in text_lower)
+            # Require at least one key term match
+            return matches > 0
+        
+        return True  # If no meaningful terms, don't filter
+    
     def retrieve_context(
         self,
         query: str,
         top_k: int = 5,
-        min_score: float = 0.7,
+        min_score: float = 0.75,  # Higher default threshold for better relevance
         namespace: Optional[str] = None,
         max_tokens: int = 3000
     ) -> Tuple[str, List[Dict[str, Any]]]:
@@ -96,6 +118,11 @@ class RAGService:
                 )
                 citation = metadata.get("citation") or metadata.get("url", "")
                 source = metadata.get("source", "knowledge_base")
+                
+                # Relevance check - filter out obviously irrelevant results
+                if not self._is_relevant(query, text, case_name):
+                    print(f"Filtered out irrelevant result: {case_name} (score: {score:.2f})")
+                    continue
                 
                 # Build match info
                 match_info = {

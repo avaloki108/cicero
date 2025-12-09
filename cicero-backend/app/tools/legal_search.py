@@ -190,10 +190,18 @@ async def search_case_law(query: str, jurisdiction: str = None) -> str:
 @tool
 async def search_statutes(query: str, state: str = "US") -> str:
     """
-    Search for legislation, bills, and statutes in a specific US State or Federal Congress.
+    Search for RECENT legislation and bills (last ~2 years) in a specific US State or Federal Congress.
+    
+    IMPORTANT: This searches for RECENT BILLS, not established statutes or legal codes.
+    For established legal concepts (like "statute of limitations", "eviction requirements", etc.),
+    use search_case_law instead.
+    
     Arguments:
-      query: Keywords for the law (e.g. "tenant eviction notice").
+      query: Keywords for the recent bill/legislation (e.g. "new tenant protection bill").
       state: The 2-letter state code (e.g. "CA", "TX", "NY"). Use "US" for Federal.
+    
+    Best for: Recently introduced bills, pending legislation, new laws being considered.
+    NOT for: Established legal concepts, state codes, long-standing statutes.
     """
     # 1. Search for the Bill/Statute ID
     search_url = "https://api.legiscan.com/"
@@ -208,7 +216,7 @@ async def search_statutes(query: str, state: str = "US") -> str:
     search_data = await fetch_json(search_url, search_params)
 
     if search_data.get("status") != "OK":
-        return "No statutes found matching that query."
+        return "No recent bills found matching that query. Note: This tool searches for recent bills (last 2 years), not established statutes. For established legal concepts, case law searches may be more appropriate."
 
     # 2. Get details for the top result
     results = search_data.get("searchresult", {})
@@ -216,10 +224,22 @@ async def search_statutes(query: str, state: str = "US") -> str:
     bills = [v for k, v in results.items() if k != "summary"]
 
     if not bills:
-        return "No specific bills found."
+        return "No specific bills found. Note: This tool searches for recent bills (last 2 years), not established statutes."
 
     top_bill = bills[0]
     bill_id = top_bill.get("bill_id")
+    
+    # Check if the bill title/description seems relevant to the query
+    bill_title = top_bill.get("title", "").lower()
+    query_lower = query.lower()
+    query_words = set(query_lower.split())
+    
+    # Simple relevance check - if the bill title doesn't contain key query terms, warn
+    title_words = set(bill_title.split())
+    relevant_terms = query_words & title_words
+    if len(relevant_terms) == 0 and len(query_words) > 2:
+        # Bill might not be relevant, but we'll still return it with a note
+        print(f"--- Warning: Bill '{bill_title}' may not be directly relevant to query '{query}' ---")
 
     # 3. Fetch full text/summary of that bill
     details_url = "https://api.legiscan.com/"
