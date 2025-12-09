@@ -130,15 +130,19 @@ async def search_case_law(query: str, jurisdiction: str = None) -> str:
     
     Tips: Convert user questions to legal concepts. "pulled over rights" -> "fourth amendment traffic stop"
     """
+    # Improve the query for better results
+    improved_query = _improve_legal_query(query)
+    
     # Use v4 API
     url = "https://www.courtlistener.com/api/rest/v4/search/"
     headers = {"Authorization": f"Token {settings.COURTLISTENER_API_KEY}"}
     params = {
-        "q": query,
+        "q": improved_query,
         "type": "o",  # Opinion search type
     }
     
-    print(f"--- Case law query: '{query}' ---")
+    print(f"--- Case law query (original): '{query}' ---")
+    print(f"--- Case law query (improved): '{improved_query}' ---")
     
     # Convert state abbreviation to CourtListener court IDs
     if jurisdiction and jurisdiction.upper() in STATE_TO_COURT:
@@ -161,13 +165,15 @@ async def search_case_law(query: str, jurisdiction: str = None) -> str:
     if not results:
         return "No relevant case law found."
 
-    # Format the top 3 cases for Cicero to read
+    # Filter results for relevance to the original query
+    query_terms = set(query.lower().split())
+    query_terms -= {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'what', 'when', 'where', 'why', 'how', 'about', 'can', 'could', 'should', 'would', 'do', 'does', 'did', 'my', 'me', 'i'}
+    
+    # Format and filter the top cases
     formatted_cases = []
-    for case in results[:3]:
+    for case in results[:15]:  # Check more cases to find relevant ones
         name = case.get("caseName", "Unknown Case")
-        # citation can be None or a list
-        citation_list = case.get("citation")
-        citation = citation_list[0] if citation_list else case.get("docketNumber", "No citation")
+        case_text = name.lower()
         
         # In v4 API, snippet is often in opinions[0].snippet
         snippet = None
@@ -175,13 +181,51 @@ async def search_case_law(query: str, jurisdiction: str = None) -> str:
         if opinions and len(opinions) > 0:
             snippet = opinions[0].get("snippet")
         if not snippet:
-            snippet = case.get("snippet") or case.get("syllabus") or case.get("suitNature") or "No summary available - see full case for details."
+            snippet = case.get("snippet") or case.get("syllabus") or case.get("suitNature") or ""
+        
+        if snippet:
+            case_text += " " + snippet.lower()
+        
+        # Check relevance - case should contain key query terms
+        if query_terms and len(query_terms) > 0:
+            # For "statute of limitations" queries, look for specific terms
+            if "statute" in query.lower() and "limitations" in query.lower():
+                # Must contain both "statute" and "limitations" or related terms
+                has_statute = "statute" in case_text or "limitation" in case_text or "time limit" in case_text
+                has_injury = "injury" in query.lower() and ("injury" in case_text or "tort" in case_text or "negligence" in case_text)
+                if not has_statute:
+                    print(f"--- Filtered out case (no statute/limitation terms): {name} ---")
+                    continue
+                if "injury" in query.lower() and not has_injury:
+                    # For personal injury queries, prefer cases that mention injury
+                    print(f"--- Filtered out case (no injury terms): {name} ---")
+                    continue
+            else:
+                # For other queries, check if key terms appear
+                matches = sum(1 for term in query_terms if term in case_text)
+                if matches == 0:
+                    print(f"--- Filtered out irrelevant case: {name} ---")
+                    continue
+        
+        # citation can be None or a list
+        citation_list = case.get("citation")
+        citation = citation_list[0] if citation_list else case.get("docketNumber", "No citation")
+        
+        if not snippet:
+            snippet = "No summary available - see full case for details."
         
         date = case.get("dateFiled", "Unknown date")
         court = case.get("court", "Unknown court")
         formatted_cases.append(
             f"CASE: {name} ({date})\nCOURT: {court}\nCITATION: {citation}\nSUMMARY: {snippet}\n---"
         )
+        
+        # Limit to top 3 relevant cases
+        if len(formatted_cases) >= 3:
+            break
+
+    if not formatted_cases:
+        return f"No relevant case law found for '{query}'. The search may need different terms or the information might be in state statutes rather than case law."
 
     return "\n".join(formatted_cases)
 
