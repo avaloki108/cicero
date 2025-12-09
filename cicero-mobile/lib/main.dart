@@ -6,7 +6,6 @@ import 'core/theme_cicero.dart';
 import 'presentation/home_screen.dart';
 import 'presentation/login_screen.dart';
 import 'presentation/providers.dart';
-import 'services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

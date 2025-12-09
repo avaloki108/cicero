@@ -4,7 +4,6 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../core/theme_cicero.dart';
 import 'providers.dart';
 import 'subscription_screen.dart';
-import '../services/auth_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});

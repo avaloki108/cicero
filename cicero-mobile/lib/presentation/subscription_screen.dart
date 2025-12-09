@@ -4,7 +4,6 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'providers.dart';
-import '../services/auth_service.dart';
 
 class SubscriptionScreen extends ConsumerStatefulWidget {
   const SubscriptionScreen({super.key});
@@ -72,6 +71,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       final apiBaseUrl = ref.read(apiBaseUrlProvider);
 
       if (token == null) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Not authenticated')),
         );
@@ -85,6 +85,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
           'Content-Type': 'application/json',
         },
       ).timeout(const Duration(seconds: 10));
+
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -103,6 +105,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );

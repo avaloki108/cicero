@@ -56,7 +56,7 @@ class CiceroApiClient {
       // Get auth token if available
       final headers = {'Content-Type': 'application/json'};
       if (_authService != null) {
-        final token = await _authService!.getIdToken();
+        final token = await _authService.getIdToken();
         if (token != null) {
           headers['Authorization'] = 'Bearer $token';
         }

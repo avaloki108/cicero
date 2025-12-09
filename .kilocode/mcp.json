@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "git-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@0.1.29",
+        "https://gitmcp.io/avaloki108/cicero"
+      ]
+    }
+  }
+}
