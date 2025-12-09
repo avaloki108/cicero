@@ -5,8 +5,76 @@ class CiceroApp {
         this.messages = this.loadMessages();
         this.selectedState = this.loadState() || 'CA';
         this.isLoading = false;
+        this.currentUser = null;
+        this.authToken = null;
         
-        this.init();
+        this.initAuth();
+    }
+
+    async initAuth() {
+        firebase.auth().onAuthStateChanged(async (user) => {
+            if (user) {
+                this.currentUser = user;
+                this.authToken = await user.getIdToken();
+                document.getElementById('appContainer').style.display = 'block';
+                document.getElementById('loginModal').style.display = 'none';
+                this.init();
+            } else {
+                document.getElementById('appContainer').style.display = 'none';
+                document.getElementById('loginModal').style.display = 'block';
+                this.setupAuthListeners();
+            }
+        });
+    }
+
+    setupAuthListeners() {
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            try {
+                await firebase.auth().signInWithEmailAndPassword(email, password);
+            } catch (error) {
+                document.getElementById('authError').textContent = error.message;
+                document.getElementById('authError').style.display = 'block';
+            }
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            if (password !== confirm) {
+                document.getElementById('authError').textContent = 'Passwords do not match';
+                document.getElementById('authError').style.display = 'block';
+                return;
+            }
+            try {
+                await firebase.auth().createUserWithEmailAndPassword(email, password);
+            } catch (error) {
+                document.getElementById('authError').textContent = error.message;
+                document.getElementById('authError').style.display = 'block';
+            }
+        });
+
+        document.getElementById('switchToRegister').addEventListener('click', () => {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+        });
+
+        document.getElementById('switchToLogin').addEventListener('click', () => {
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await firebase.auth().signOut();
+        });
+
+        document.getElementById('subscriptionBtn').addEventListener('click', () => {
+            window.open(`${this.apiBaseUrl}/subscription/create-checkout`, '_blank');
+        });
     }
 
     getApiBaseUrl() {
@@ -119,12 +187,22 @@ class CiceroApp {
                     content: msg.content
                 }));
 
+            // Get fresh token
+            if (this.currentUser) {
+                this.authToken = await this.currentUser.getIdToken();
+            }
+
             // Send to API
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            if (this.authToken) {
+                headers['Authorization'] = `Bearer ${this.authToken}`;
+            }
+
             const response = await fetch(`${this.apiBaseUrl}/chat`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: headers,
                 body: JSON.stringify({
                     message: message,
                     state: this.selectedState,

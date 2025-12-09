@@ -9,3 +9,11 @@ langgraph
 langchain-groq
 pydantic
 pydantic-settings
+pinecone
+firebase-admin
+sqlalchemy
+psycopg2-binary
+alembic
+stripe
+slowapi
+python-jose[cryptography]

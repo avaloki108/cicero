@@ -2,10 +2,14 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'auth_service.dart';
 
 class CiceroApiClient {
-  CiceroApiClient({String? baseUrl})
-    : baseUrl = _normalizeBaseUrl(baseUrl ?? CiceroApiClient.defaultBaseUrl);
+  CiceroApiClient({String? baseUrl, AuthService? authService})
+    : baseUrl = _normalizeBaseUrl(baseUrl ?? CiceroApiClient.defaultBaseUrl),
+      _authService = authService;
+
+  final AuthService? _authService;
 
   final String baseUrl;
 
@@ -49,10 +53,19 @@ class CiceroApiClient {
     List<Map<String, dynamic>> history = const [],
   }) async {
     try {
+      // Get auth token if available
+      final headers = {'Content-Type': 'application/json'};
+      if (_authService != null) {
+        final token = await _authService!.getIdToken();
+        if (token != null) {
+          headers['Authorization'] = 'Bearer $token';
+        }
+      }
+
       final response = await http
           .post(
             Uri.parse('$baseUrl/chat'),
-            headers: {'Content-Type': 'application/json'},
+            headers: headers,
             body: jsonEncode({
               'message': message,
               'state': state ?? 'US',

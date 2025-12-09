@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../core/theme_cicero.dart';
 import 'providers.dart';
+import 'subscription_screen.dart';
+import '../services/auth_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -33,6 +35,65 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         children: [
           const SizedBox(height: 20),
+
+          // SECTION 0: ACCOUNT
+          _SectionHeader(title: "ACCOUNT"),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: sectionColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                _SettingsTile(
+                  icon: LucideIcons.crown,
+                  title: "Subscription",
+                  isFirst: true,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const SubscriptionScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _Divider(),
+                _SettingsTile(
+                  icon: LucideIcons.logOut,
+                  title: "Sign Out",
+                  titleColor: Colors.red,
+                  iconColor: Colors.red,
+                  isLast: true,
+                  onTap: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Sign Out'),
+                        content: const Text('Are you sure you want to sign out?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(false),
+                            child: const Text('Cancel'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.of(ctx).pop(true),
+                            child: const Text('Sign Out'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed == true && context.mounted) {
+                      final authService = ref.read(authServiceProvider);
+                      await authService.signOut();
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
 
           // SECTION 1: PREFERENCES
           _SectionHeader(title: "PREFERENCES"),

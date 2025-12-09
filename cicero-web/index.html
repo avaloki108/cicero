@@ -7,9 +7,33 @@
     <title>Cicero - AI Legal Assistant</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/png" href="favicon.png">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 </head>
 <body>
-    <div class="app-container">
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Sign In to Cicero</h2>
+            <form id="loginForm">
+                <input type="email" id="loginEmail" placeholder="Email" required>
+                <input type="password" id="loginPassword" placeholder="Password" required>
+                <button type="submit">Sign In</button>
+                <button type="button" id="switchToRegister">Don't have an account? Sign Up</button>
+            </form>
+            <form id="registerForm" style="display: none;">
+                <input type="email" id="registerEmail" placeholder="Email" required>
+                <input type="password" id="registerPassword" placeholder="Password" required>
+                <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+                <button type="submit">Sign Up</button>
+                <button type="button" id="switchToLogin">Already have an account? Sign In</button>
+            </form>
+            <div id="authError" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <div class="app-container" id="appContainer" style="display: none;">
         <!-- Header -->
         <header class="app-header">
             <div class="header-content">
@@ -20,6 +44,8 @@
                 <p class="app-subtitle">Your AI Legal Companion</p>
             </div>
             <div class="header-actions">
+                <button id="subscriptionBtn" class="icon-btn" title="Subscription">💎</button>
+                <button id="logoutBtn" class="icon-btn" title="Sign Out">🚪</button>
                 <select id="stateSelector" class="state-selector" title="Select your state">
                     <option value="US">United States</option>
                     <option value="AL">Alabama</option>
@@ -138,6 +164,18 @@
         </footer>
     </div>
 
+    <script>
+        // Firebase config - replace with your actual config
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        firebase.initializeApp(firebaseConfig);
+    </script>
     <script src="app.js"></script>
 </body>
 </html>

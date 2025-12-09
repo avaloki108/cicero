@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../services/cicero_api_client.dart';
+import '../services/auth_service.dart';
 
 String _sanitizeBaseUrl(String url) {
   var cleaned = url.trim();
@@ -25,10 +26,16 @@ String _sanitizeBaseUrl(String url) {
 
 // --- CORE SERVICES ---
 
+// Auth service provider
+final authServiceProvider = Provider<AuthService>((ref) {
+  return AuthService();
+});
+
 // The only API client we need now. It talks to your Python Backend.
 final ciceroApiClientProvider = Provider<CiceroApiClient>((ref) {
   final baseUrl = ref.watch(apiBaseUrlProvider);
-  return CiceroApiClient(baseUrl: baseUrl);
+  final authService = ref.watch(authServiceProvider);
+  return CiceroApiClient(baseUrl: baseUrl, authService: authService);
 });
 
 // --- STATE MANAGEMENT ---
