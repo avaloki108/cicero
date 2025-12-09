@@ -1,0 +1,31 @@
+{
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "cicero-8141b",
+                    "appId": "1:122392581066:android:b50a9c98e170c83e21b533",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            },
+            "ios": {
+                "default": {
+                    "projectId": "cicero-8141b",
+                    "appId": "1:122392581066:ios:372f88e1eeab32d721b533",
+                    "uploadDebugSymbols": false,
+                    "fileOutput": "ios/Runner/GoogleService-Info.plist"
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "cicero-8141b",
+                    "configurations": {
+                        "android": "1:122392581066:android:b50a9c98e170c83e21b533",
+                        "ios": "1:122392581066:ios:372f88e1eeab32d721b533",
+                        "web": "1:122392581066:web:e3e080c01a7d068021b533"
+                    }
+                }
+            }
+        }
+    }
+}

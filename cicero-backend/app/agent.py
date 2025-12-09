@@ -155,14 +155,14 @@ async def handle_xml_tool_call(content: str, messages: list, user_state: str = "
             args['state'] = user_state
             print(f"--- Using user's state setting: {user_state} ---")
         
-    # Execute the tool directly using arun
-    print(f"--- Manually executing {tool_name} with args: {args} ---")
-    if tool_name == 'search_case_law':
-        result = await search_case_law.arun(tool_input=args)
-    elif tool_name == 'search_statutes':
-        result = await search_statutes.arun(tool_input=args)
-    else:
-        result = "I couldn't find specific information on that topic."
+        # Execute the tool directly using arun
+        print(f"--- Manually executing {tool_name} with args: {args} ---")
+        if tool_name == 'search_case_law':
+            result = await search_case_law.arun(tool_input=args)
+        elif tool_name == 'search_statutes':
+            result = await search_statutes.arun(tool_input=args)
+        else:
+            result = "I couldn't find specific information on that topic."
         
         print(f"--- Tool result (first 200 chars): {str(result)[:200]} ---")
         

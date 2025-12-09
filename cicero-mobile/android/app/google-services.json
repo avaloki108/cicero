@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "122392581066",
+    "project_id": "cicero-8141b",
+    "storage_bucket": "cicero-8141b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:122392581066:android:b50a9c98e170c83e21b533",
+        "android_client_info": {
+          "package_name": "com.example.cicero_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "122392581066-13kuti4d49grcng8alff0500pvle0u7d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRV7ChO83ZODyqCUHbsTYMzdOM22j-7Vo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "122392581066-13kuti4d49grcng8alff0500pvle0u7d.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "122392581066-h9f6qi01cupk8c7c5l2jr775cr54hcgb.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.ciceroApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
