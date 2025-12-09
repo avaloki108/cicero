@@ -7,7 +7,7 @@
   - 5th-grade reading level "Plain English" translation.
   - Empathetic responses strictly enforced.
   - Uses analogies (e.g., "Double Jeopardy" for civil cases).
-  - Tools enabled: `search_statutes`, `search_case_law`, `search_legal_precedents`.
+  - Tools enabled: `search_statutes`, `search_case_law`.
 - **Architecture:**
   - **Graph:** Async LangGraph with `add_messages` reducer.
   - **Loop prevention:** Explicit tool protocol in system prompt to prevent XML/mixed-content errors.

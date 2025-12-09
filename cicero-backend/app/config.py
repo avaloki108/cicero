@@ -10,10 +10,6 @@ class Settings(BaseSettings):
     # The "Reader" (Large Context & Embeddings)
     GEMINI_API_KEY: str
     GEMINI_MODEL: str = "gemini-1.5-flash"  # using 1.5 as 2.5 is not yet standard API, change if you have beta access
-    
-    PINECONE_API_KEY: str  # Add this!
-    PINECONE_INDEX_NAME: str = "cicero-knowledge" # Default index name
-    PINECONE_NAMESPACE: str = "case-law"
 
     # Memory
     QDRANT_URL: str = (

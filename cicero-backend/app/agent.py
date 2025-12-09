@@ -7,8 +7,6 @@ from langchain_core.messages import SystemMessage, BaseMessage, ToolMessage, AIM
 from pydantic import SecretStr
 from app.config import settings
 from app.tools.legal_search import search_case_law, search_statutes
-from app.tools.knowledge_base import search_legal_precedents
-from app.rag_service import rag_service
 
 # 1. Define the State
 class AgentState(TypedDict):
@@ -24,7 +22,7 @@ llm = ChatGroq(
 )
 
 # Bind the tools to the LLM so it knows they exist
-tools = [search_case_law, search_statutes, search_legal_precedents]
+tools = [search_case_law, search_statutes]
 llm_with_tools = llm.bind_tools(tools)
 
 
@@ -33,44 +31,10 @@ async def reasoner(state: AgentState):
     """
     The reasoning node. This is where Cicero 'thinks'.
     He looks at the conversation and decides if he needs to search the law.
-    Now enhanced with RAG context retrieval.
     """
     messages = state["messages"].copy()  # Work with a copy to avoid mutating state
     user_state = state.get("user_state", "US")
 
-    # Extract the latest user message for RAG context retrieval
-    latest_user_message = None
-    for msg in reversed(messages):
-        if isinstance(msg, HumanMessage):
-            latest_user_message = msg.content
-            break
-    
-    # Retrieve RAG context if we have a user message
-    # Only retrieve if we have a clear query that might benefit from knowledge base
-    rag_context = ""
-    rag_matches = []
-    if latest_user_message:
-        try:
-            context, matches = rag_service.retrieve_context(
-                query=latest_user_message,
-                top_k=3,
-                min_score=0.75,  # Higher threshold to ensure relevance
-                max_tokens=2000
-            )
-            # Only use context if we have high-quality matches
-            if context and matches:
-                # Check if top match has good relevance
-                top_score = matches[0].get("score", 0.0) if matches else 0.0
-                if top_score >= 0.75:  # Only use if top result is highly relevant
-                    rag_context = context
-                    rag_matches = matches
-                else:
-                    print(f"RAG context rejected: top score {top_score} below threshold")
-        except Exception as e:
-            print(f"Error retrieving RAG context: {e}")
-            # Continue without RAG context if retrieval fails
-
-    # Build system prompt with RAG context if available
     base_system_content = f"""You are Cicero, a warm and empathetic legal companion who helps people understand the law.
 
 IMPORTANT: The user is located in {user_state}. When searching for laws or statutes, ALWAYS use state="{user_state}" to get relevant local laws.
@@ -82,22 +46,27 @@ PERSONA:
 - You use helpful analogies and metaphors
 
 TOOL USAGE GUIDELINES:
-- You have tools available: search_case_law, search_statutes, search_legal_precedents
-- ONLY use tools when you need to look up specific cases, statutes, or legal precedents
-- When searching statutes, ALWAYS use state="{user_state}" for the user's state
+- You have tools available: search_case_law, search_statutes.
+- Use tools when you need specific, current, or state-specific information.
+- For well-established legal concepts (Miranda rights, police stop rights, etc.), you can answer from your knowledge without tools.
+- When searching statutes, ALWAYS use state="{user_state}" for the user's state.
 
-IMPORTANT TOOL SELECTION:
-- search_case_law: Use for legal rules, standards, requirements, case law, court decisions, and established legal concepts (like "statute of limitations", "Miranda rights", "probable cause", etc.)
-- search_statutes: ONLY use for RECENT BILLS or LEGISLATION (bills being considered, recently passed laws). DO NOT use for established legal concepts like "statute of limitations", "eviction notice requirements", etc. Those are found in case law or state codes, not recent bills.
-- search_legal_precedents: Use for documents in the knowledge base (uploaded PDFs, case notes, etc.)
+IMPORTANT TOOL SELECTION - READ CAREFULLY:
+- search_case_law: Use for legal rules, standards, requirements, case law, court decisions, and established legal concepts. 
+  * ALWAYS use this for: "statute of limitations", "eviction notice", "Miranda rights", "probable cause", "search and seizure", "tenant rights", "business registration", "LLC formation", "business name registration", "corporate requirements", etc.
+  * These are established legal concepts found in case law, NOT in recent bills.
+  
+- search_statutes: ONLY use for RECENT BILLS or LEGISLATION (bills being considered in the last 2 years, recently passed laws).
+  * DO NOT use for: "statute of limitations", "eviction notice requirements", "Miranda rights", "business registration", "LLC requirements", "business name registration", or any established legal concept.
+  * ONLY use when user explicitly asks about a recent bill, new legislation, or pending law.
 
-For questions about established legal concepts (statute of limitations, tenant rights, search and seizure, etc.), use search_case_law, NOT search_statutes.
+CRITICAL: If the user asks about "statute of limitations", "eviction notice", "business registration", "LLC formation", "business name requirements", or similar established legal concepts, you MUST use search_case_law, NOT search_statutes. The search_statutes tool only finds recent bills, not established laws.
 
-IMPORTANT: If search_case_law returns results that don't seem relevant to the user's question (e.g., user asks about "statute of limitations" but gets cases about unrelated topics), you should:
-1. Acknowledge that the search didn't find directly relevant cases
-2. Try rephrasing the query with more specific legal terms
-3. Or explain that this information might be better found in state statutes/codes rather than case law
-4. Be honest if you can't find relevant information - don't just return irrelevant cases
+IMPORTANT: If search_case_law returns results that don't seem relevant to the user's question, you should:
+1. Still provide a helpful answer using your general legal knowledge if the question is about well-established legal concepts (like Miranda rights, police stop rights, etc.)
+2. You can answer general legal questions from your training knowledge - you don't need case law for every question
+3. Only mention that case law wasn't found if it's critical to the answer
+4. For well-known legal rights (Miranda, police stops, etc.), you can provide accurate information even without specific case citations
 
 - If you already have tool results, synthesize them—do NOT call the same tool again for the same question unless you need a different scope.
 - For general legal concepts or advice, you can answer directly from your knowledge
@@ -109,26 +78,9 @@ RESPONSE STYLE:
 - Acknowledge the person's concerns first
 - Explain concepts simply with examples
 - Cite sources when you have them from tool searches
-- If something fails, say "I'm having trouble finding that information" - never show errors"""
-
-    # Add RAG context if available
-    if rag_context:
-        base_system_content += f"""
-
-KNOWLEDGE BASE CONTEXT:
-The following information from our knowledge base has been retrieved. CRITICALLY IMPORTANT: Only use this context if it is DIRECTLY relevant to the user's question. If the context is about a completely different topic (e.g., user asks about warrants but context is about bankruptcy), IGNORE IT COMPLETELY and do not mention it. Only reference context that actually helps answer the user's specific question.
-
-If the context is relevant, use it to provide more accurate answers. If it's not relevant, ignore it and use tools instead.
-
-START KNOWLEDGE BASE CONTEXT
-{rag_context}
-END KNOWLEDGE BASE CONTEXT
-
-CRITICAL: Before using any information from the knowledge base context above:
-1. Check if it's actually relevant to the user's question
-2. If NOT relevant (different topic/subject), IGNORE IT and use tools (search_case_law, search_statutes, search_legal_precedents) instead
-3. If relevant, you can mention the source when using it
-4. NEVER mention or cite irrelevant context - it will confuse the user"""
+- If you can answer well from your knowledge, do so confidently - don't add unnecessary disclaimers
+- Only mention limitations if the information is truly unavailable or uncertain
+- If something fails, say "I'm having some trouble finding that information" - never show errors"""
 
     system_prompt = SystemMessage(content=base_system_content)
 
@@ -139,9 +91,6 @@ CRITICAL: Before using any information from the knowledge base context above:
         # Replace existing system message with our updated one
         messages[0] = system_prompt
 
-    # Get user_state with a default fallback
-    user_state = state.get("user_state", "US")
-    
     try:
         response = await llm_with_tools.ainvoke(messages)
         
@@ -206,16 +155,14 @@ async def handle_xml_tool_call(content: str, messages: list, user_state: str = "
             args['state'] = user_state
             print(f"--- Using user's state setting: {user_state} ---")
         
-        # Execute the tool directly using arun
-        print(f"--- Manually executing {tool_name} with args: {args} ---")
-        if tool_name == 'search_case_law':
-            result = await search_case_law.arun(tool_input=args)
-        elif tool_name == 'search_statutes':
-            result = await search_statutes.arun(tool_input=args)
-        elif tool_name == 'search_legal_precedents':
-            result = await search_legal_precedents.arun(tool_input=args)
-        else:
-            result = "I couldn't find specific information on that topic."
+    # Execute the tool directly using arun
+    print(f"--- Manually executing {tool_name} with args: {args} ---")
+    if tool_name == 'search_case_law':
+        result = await search_case_law.arun(tool_input=args)
+    elif tool_name == 'search_statutes':
+        result = await search_statutes.arun(tool_input=args)
+    else:
+        result = "I couldn't find specific information on that topic."
         
         print(f"--- Tool result (first 200 chars): {str(result)[:200]} ---")
         
@@ -269,11 +216,21 @@ async def tool_executor(state: AgentState):
     user_query = ""
     for msg in reversed(state["messages"]):
         if isinstance(msg, HumanMessage):
-            user_query = msg.content
+            content = msg.content
+            # Handle both string and list content types
+            if isinstance(content, str):
+                user_query = content
+            elif isinstance(content, list) and len(content) > 0:
+                # If content is a list, try to extract text from first item
+                first_item = content[0]
+                if isinstance(first_item, str):
+                    user_query = first_item
+                elif isinstance(first_item, dict) and "text" in first_item:
+                    user_query = first_item["text"]
             break
     
     tool_calls = last_message.tool_calls
-    results = []
+    results: list[tuple[str, str, str]] = []
 
     print(f"--- Cicero is using tools: {len(tool_calls)} calls ---")
 
@@ -285,6 +242,29 @@ async def tool_executor(state: AgentState):
             tool_args = raw_args or {}
             
             tool_id = call.get("id") if isinstance(call, dict) else call.id
+            # Ensure tool_id is always a string
+            tool_id = str(tool_id) if tool_id is not None else "unknown"
+            
+            # Prevent using search_statutes for established legal concepts
+            if tool_name == "search_statutes" and user_query:
+                query_lower = user_query.lower()
+                # Check if this is about an established legal concept
+                established_concepts = [
+                    "statute of limitations", "statute limitations",
+                    "eviction notice", "eviction requirements",
+                    "miranda rights", "probable cause",
+                    "search and seizure", "fourth amendment",
+                    "business registration", "register a business", "business name registration",
+                    "llc", "llc formation", "llc requirements", "form an llc",
+                    "corporate requirements", "business license", "business name"
+                ]
+                if any(concept in query_lower for concept in established_concepts):
+                    print(f"--- ERROR: search_statutes called for established legal concept. Redirecting to search_case_law ---")
+                    # Redirect to search_case_law instead
+                    tool_name = "search_case_law"
+                    # Update tool_args if needed
+                    if "state" in tool_args:
+                        tool_args["jurisdiction"] = tool_args.pop("state")
             
             if tool_name == "search_case_law":
                 res = await search_case_law.ainvoke(tool_args)
@@ -300,16 +280,18 @@ async def tool_executor(state: AgentState):
                     print(f"--- Warning: search_statutes result may not be relevant to query ---")
                     res = f"Note: This result may not be directly relevant to your question. The search_statutes tool finds recent bills, not established legal concepts. For questions about established laws like 'statute of limitations', try search_case_law instead. {res}"
                 results.append((tool_id, res, tool_name))
-            elif tool_name == "search_legal_precedents":
-                res = await search_legal_precedents.ainvoke(tool_args)
-                results.append((tool_id, res, tool_name))
             else:
                 print(f"Unknown tool called: {tool_name}")
-                results.append((tool_id, f"Error: Tool '{tool_name}' is not available.", tool_name))
+                tool_name_str = str(tool_name) if tool_name is not None else "unknown"
+                results.append((tool_id, f"Error: Tool '{tool_name_str}' is not available.", tool_name_str))
         except Exception as e:
             print(f"Error executing tool call: {e}")
             tool_id = call.get("id") if isinstance(call, dict) else getattr(call, "id", "unknown")
-            results.append((tool_id, f"I'm having trouble reaching the court records right now. Please try again in a moment.", tool_name if 'tool_name' in locals() else 'unknown'))
+            tool_id = str(tool_id) if tool_id is not None else "unknown"
+            # Get tool_name from the call if available
+            error_tool_name = call.get("name") if isinstance(call, dict) else getattr(call, "name", "unknown")
+            error_tool_name = str(error_tool_name) if error_tool_name is not None else "unknown"
+            results.append((tool_id, f"I'm having trouble reaching the court records right now. Please try again in a moment.", error_tool_name))
     
     # Return results as ToolMessages so Cicero can read them
     tool_messages = [

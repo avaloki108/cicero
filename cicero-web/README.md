@@ -123,9 +123,6 @@ To add new features:
 
 The app currently uses:
 - `/chat` - Main chat endpoint
-
-Additional endpoints available:
-- `/rag/context` - Get RAG context for a query
 - `/` - Health check
 
 ## Troubleshooting
@@ -148,4 +145,3 @@ Additional endpoints available:
 ## License
 
 Part of the Cicero project.
-
