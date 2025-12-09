@@ -8,6 +8,7 @@ from pydantic import SecretStr
 from app.config import settings
 from app.tools.legal_search import search_case_law, search_statutes
 from app.tools.knowledge_base import search_legal_precedents
+from app.rag_service import rag_service
 
 # 1. Define the State
 class AgentState(TypedDict):
@@ -32,13 +33,38 @@ async def reasoner(state: AgentState):
     """
     The reasoning node. This is where Cicero 'thinks'.
     He looks at the conversation and decides if he needs to search the law.
+    Now enhanced with RAG context retrieval.
     """
     messages = state["messages"].copy()  # Work with a copy to avoid mutating state
     user_state = state.get("user_state", "US")
 
-    # System Prompt: defining the Persona
-    system_prompt = SystemMessage(
-        content=f"""You are Cicero, a warm and empathetic legal companion who helps people understand the law.
+    # Extract the latest user message for RAG context retrieval
+    latest_user_message = None
+    for msg in reversed(messages):
+        if isinstance(msg, HumanMessage):
+            latest_user_message = msg.content
+            break
+    
+    # Retrieve RAG context if we have a user message
+    rag_context = ""
+    rag_matches = []
+    if latest_user_message:
+        try:
+            context, matches = rag_service.retrieve_context(
+                query=latest_user_message,
+                top_k=3,
+                min_score=0.6,  # Lower threshold to get more context
+                max_tokens=2000
+            )
+            if context:
+                rag_context = context
+                rag_matches = matches
+        except Exception as e:
+            print(f"Error retrieving RAG context: {e}")
+            # Continue without RAG context if retrieval fails
+
+    # Build system prompt with RAG context if available
+    base_system_content = f"""You are Cicero, a warm and empathetic legal companion who helps people understand the law.
 
 IMPORTANT: The user is located in {user_state}. When searching for laws or statutes, ALWAYS use state="{user_state}" to get relevant local laws.
 
@@ -62,9 +88,22 @@ RESPONSE STYLE:
 - Acknowledge the person's concerns first
 - Explain concepts simply with examples
 - Cite sources when you have them from tool searches
-- If something fails, say "I'm having trouble finding that information" - never show errors
-"""
-    )
+- If something fails, say "I'm having trouble finding that information" - never show errors"""
+
+    # Add RAG context if available
+    if rag_context:
+        base_system_content += f"""
+
+KNOWLEDGE BASE CONTEXT:
+The following information from our knowledge base may be relevant to the user's question. Use this context to provide more accurate and informed answers. If the context doesn't fully answer the question, you can still use tools to search for additional information.
+
+START KNOWLEDGE BASE CONTEXT
+{rag_context}
+END KNOWLEDGE BASE CONTEXT
+
+When referencing information from the knowledge base context above, you can mention the source. However, prioritize using tools (search_case_law, search_statutes, search_legal_precedents) for the most up-to-date and comprehensive legal information."""
+
+    system_prompt = SystemMessage(content=base_system_content)
 
     # Ensure system prompt is always the first message
     if not messages or not isinstance(messages[0], SystemMessage):

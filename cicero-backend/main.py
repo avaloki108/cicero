@@ -1,7 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import List, Dict, Any, Optional
 from app.models import ChatRequest, ChatResponse
 from app.agent import app_graph
+from app.rag_service import rag_service
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from app.tools.legal_search import search_case_law
 
@@ -20,6 +23,48 @@ app.add_middleware(
 @app.get("/")
 def health_check():
     return {"status": "online", "system": "Cicero 2.0 Agentic Brain"}
+
+
+# RAG Context Models
+class RAGContextRequest(BaseModel):
+    query: str
+    top_k: int = 5
+    min_score: float = 0.7
+    namespace: Optional[str] = None
+    max_tokens: int = 3000
+
+
+class RAGContextResponse(BaseModel):
+    context: str
+    matches: List[Dict[str, Any]]
+    has_context: bool
+    match_count: int
+
+
+@app.post("/rag/context", response_model=RAGContextResponse)
+async def get_rag_context(request: RAGContextRequest):
+    """
+    Retrieve RAG context for a given query.
+    This endpoint can be used by the frontend to get context before sending to chat,
+    or for displaying relevant documents to the user.
+    """
+    try:
+        rag_result = rag_service.get_rag_context(
+            query=request.query,
+            top_k=request.top_k,
+            min_score=request.min_score,
+            namespace=request.namespace,
+            max_tokens=request.max_tokens
+        )
+        
+        return RAGContextResponse(
+            context=rag_result["context"],
+            matches=rag_result["matches"],
+            has_context=rag_result["has_context"],
+            match_count=len(rag_result["matches"])
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving RAG context: {str(e)}")
 
 
 @app.post("/chat", response_model=ChatResponse)

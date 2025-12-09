@@ -1,24 +1,6 @@
 from langchain_core.tools import tool
-from pinecone import Pinecone, SearchQuery
-from app.config import settings
+from app.rag_service import rag_service
 
-# Initialize Pinecone once
-pc = Pinecone(api_key=settings.PINECONE_API_KEY)
-
-# Connect to your index
-# We assume you created an index named "cicero-knowledge" with model="llama-text-embed-v2"
-index = pc.Index(settings.PINECONE_INDEX_NAME)
-
-# Try the configured namespace first, then reasonable fallbacks so searches keep working.
-_namespaces = []
-for ns in (getattr(settings, "PINECONE_NAMESPACE", None), "case-law", "general", ""):
-    if ns is None:
-        continue
-    ns_clean = ns.strip()
-    if ns_clean == "":
-        ns_clean = "__default__"
-    if ns_clean not in _namespaces:
-        _namespaces.append(ns_clean)
 
 @tool
 def search_legal_precedents(query: str):
@@ -26,42 +8,37 @@ def search_legal_precedents(query: str):
     Search the internal knowledge base for specific legal documents, 
     past case notes, or uploaded PDFs.
     Use this when the user asks about specific documents we have stored.
+    
+    This tool uses RAG (Retrieval-Augmented Generation) to find relevant
+    context from the knowledge base and returns formatted results.
     """
-    search_request = SearchQuery(inputs={"text": query}, top_k=3)
-    last_error: Exception | None = None
-
-    for namespace in _namespaces:
-        try:
-            results = index.search(namespace=namespace, query=search_request)
-        except Exception as exc:
-            last_error = exc
-            continue
-
-        hits = getattr(getattr(results, "result", None), "hits", []) or []
-        if not hits:
-            continue
-
-        matches = []
-        for hit in hits:
-            fields = getattr(hit, "fields", {}) or {}
-            metadata = fields.get("metadata", {}) if isinstance(fields.get("metadata"), dict) else {}
-            text = fields.get("text") or metadata.get("text") or "No text content"
-            snippet = text if len(text) <= 600 else text[:600].rstrip() + "..."
-            case = (
-                metadata.get("case_name")
-                or metadata.get("title")
-                or metadata.get("source")
-                or "Document"
-            )
-            citation = metadata.get("citation")
-            score = getattr(hit, "_score", None)
-            score_prefix = f"[Score: {score:.2f}] " if isinstance(score, (int, float)) else ""
-            cite_suffix = f" ({citation})" if citation else ""
-            matches.append(f"{score_prefix}{case}{cite_suffix}: {snippet}")
-
-        if matches:
-            return "\n\n".join(matches)
-
-    if last_error:
-        return f"Error searching knowledge base: {last_error}"
-    return "No relevant documents found in knowledge base."
+    # Use RAG service to retrieve context
+    context, matches = rag_service.retrieve_context(
+        query=query,
+        top_k=5,
+        min_score=0.7,
+        max_tokens=2000
+    )
+    
+    if not matches:
+        return "No relevant documents found in knowledge base."
+    
+    # Format results for the tool output
+    formatted_results = []
+    for match in matches[:5]:  # Limit to top 5
+        case_name = match.get("case_name", "Document")
+        citation = match.get("citation", "")
+        text = match.get("text", "")
+        score = match.get("score", 0.0)
+        
+        # Create snippet (first 600 chars)
+        snippet = text if len(text) <= 600 else text[:600].rstrip() + "..."
+        
+        score_prefix = f"[Relevance: {score:.2f}] " if score > 0 else ""
+        cite_suffix = f" ({citation})" if citation else ""
+        
+        formatted_results.append(
+            f"{score_prefix}{case_name}{cite_suffix}:\n{snippet}"
+        )
+    
+    return "\n\n---\n\n".join(formatted_results)
